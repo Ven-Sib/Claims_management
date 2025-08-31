@@ -27,7 +27,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-tzw8frjs))=yb_+h^6x89
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # Update ALLOWED_HOSTS for Render deployment
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'claims-management-mhb2.onrender.com', '*.onrender.com']
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [
