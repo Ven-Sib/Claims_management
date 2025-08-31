@@ -1,0 +1,50 @@
+{% for claim in claims %}
+{% if claim.claim_id %}
+<tr class="lazypaste-row">
+    <td>
+        <a 
+            href="#" 
+            class="lazypaste-claim-link"
+            hx-get="{% url 'claims:claim_detail' claim.claim_id %}"
+            hx-target="#lazypaste-modal-container"
+            @click="showModal = true"
+        >
+            {{ claim.claim_id }}
+        </a>
+    </td>
+    <td>{{ claim.patient_name }}</td>
+    <td class="lazypaste-amount">${{ claim.billed_amount|floatformat:2 }}</td>
+    <td class="lazypaste-amount {% if claim.paid_amount > 0 %}positive{% else %}negative{% endif %}">
+        ${{ claim.paid_amount|floatformat:2 }}
+    </td>
+    <td>
+        <span class="lazypaste-status {{ claim.status }}">
+            {% if claim.status == 'denied' %}Denied{% elif claim.status == 'paid' %}Paid{% elif claim.status == 'under_review' %}Under Review{% endif %}
+        </span>
+    </td>
+    <td>{{ claim.insurer }}</td>
+    <td>{{ claim.discharge_date|date:"n/j/Y" }}</td>
+    <td>
+        <div class="lazypaste-actions">
+            <button 
+                class="lazypaste-btn lazypaste-btn-outline"
+                hx-get="{% url 'claims:claim_detail' claim.claim_id %}"
+                hx-target="#lazypaste-modal-container"
+                @click="showModal = true"
+            >
+                👁️ View
+            </button>
+            {% if claim.is_flagged %}
+                <span class="lazypaste-flag-indicator" title="Review me">🚩</span>
+            {% endif %}
+        </div>
+    </td>
+</tr>
+{% endif %}
+{% empty %}
+<tr>
+    <td colspan="8" class="lazypaste-no-claims">
+        No claims found matching your criteria.
+    </td>
+</tr>
+{% endfor %}

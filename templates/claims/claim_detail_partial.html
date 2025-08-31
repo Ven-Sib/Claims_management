@@ -1,0 +1,193 @@
+{% load claim_filters %}
+
+<div class="lazypaste-modal-overlay">
+    <div class="lazypaste-modal">
+        <div class="lazypaste-detail-container">
+            <!-- Header -->
+            <div class="lazypaste-detail-header">
+                <div class="lazypaste-detail-title">
+                    <h2>📋 Claim Details - {{ claim.claim_id }}</h2>
+                    <span class="lazypaste-status {{ claim.status }}">
+                        {% if claim.status == 'denied' %}Denied{% elif claim.status == 'paid' %}Paid{% elif claim.status == 'under_review' %}Under Review{% endif %}
+                    </span>
+                </div>
+                <button class="lazypaste-close-btn" onclick="closeModal()">×</button>
+            </div>
+
+            <div class="lazypaste-detail-grid">
+                <!-- Left Column - Claim Details -->
+                <div class="lazypaste-detail-left">
+                    <div class="lazypaste-detail-card">
+                        <div class="lazypaste-detail-info">
+                            <div class="lazypaste-field">
+                                <label class="lazypaste-label">Patient:</label>
+                                <span class="lazypaste-value">{{ claim.patient_name }}</span>
+                            </div>
+                            <div class="lazypaste-field">
+                                <label class="lazypaste-label">Discharge Date:</label>
+                                <span class="lazypaste-value">{{ claim.discharge_date|date:"n/j/Y" }}</span>
+                            </div>
+                            <div class="lazypaste-field">
+                                <label class="lazypaste-label">Billed Amount:</label>
+                                <span class="lazypaste-amount-value">${{ claim.billed_amount|floatformat:2 }}</span>
+                            </div>
+                            <div class="lazypaste-field">
+                                <label class="lazypaste-label">Paid Amount:</label>
+                                <span class="lazypaste-amount-value {% if claim.paid_amount > 0 %}lazypaste-amount-positive{% else %}lazypaste-amount-negative{% endif %}">
+                                    ${{ claim.paid_amount|floatformat:2 }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="lazypaste-section">
+                            <label class="lazypaste-label">CPT Codes:</label>
+                            <div class="lazypaste-cpt-codes">
+                                {% for code in claim.cpt_codes|split:"," %}
+                                    {% if code|trim %}
+                                    <span class="lazypaste-cpt-code">{{ code|trim }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="lazypaste-section">
+                            <label class="lazypaste-label">Insurer:</label>
+                            <span class="lazypaste-value">{{ claim.insurer }}</span>
+                        </div>
+                        
+                        {% if claim.denial_reason %}
+                        <div class="lazypaste-section">
+                            <label class="lazypaste-label">Denial Reason:</label>
+                            <span class="lazypaste-denial-reason">{{ claim.denial_reason }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Right Column - Notes and Actions -->
+                <div class="lazypaste-detail-right">
+                    <div class="lazypaste-notes-list">
+                        <h3 class="lazypaste-notes-header">💬 Notes & Annotations</h3>
+                        
+                        <div id="lazypaste-notes-list">
+                            {% for note in notes %}
+                            <div class="lazypaste-note {{ note.note_type }}">
+                                <div class="lazypaste-note-header">
+                                    <span class="lazypaste-note-type {{ note.note_type }}">
+                                    {% if note.note_type == 'admin' %}
+                                        Admin Note
+                                    {% elif note.note_type == 'system' %}
+                                        System Flag
+                                    {% elif note.created_by %}
+                                        {{ note.created_by.username }}
+                                    {% else %}
+                                        User Note
+                                    {% endif %}
+                                </span>
+                                    <span class="lazypaste-note-time">{{ note.created_at|timesince }} ago</span>
+                                </div>
+                                <p class="lazypaste-note-content">{{ note.content }}</p>
+                            </div>
+                            {% empty %}
+                            <p class="lazypaste-no-notes">No notes yet.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div>
+                        <h3 class="lazypaste-actions-header">Quick Actions</h3>
+                        
+                        <div class="lazypaste-actions-list">
+                            <div id="flag-button-container">
+                                {% if claim.is_flagged %}
+                                    <button 
+                                        class="lazypaste-btn lazypaste-btn-danger lazypaste-action-btn"
+                                        hx-post="{% url 'claims:flag_claim' claim.claim_id %}"
+                                        hx-target="#flag-button-container"
+                                        hx-swap="innerHTML"
+                                    >
+                                        🚩 Remove Flag
+                                    </button>
+                                {% else %}
+                                    <button 
+                                        class="lazypaste-btn lazypaste-btn-outline lazypaste-action-btn"
+                                        hx-post="{% url 'claims:flag_claim' claim.claim_id %}"
+                                        hx-target="#flag-button-container"
+                                        hx-swap="innerHTML"
+                                    >
+                                        🏳️ Flag for Review
+                                    </button>
+                                {% endif %}
+                            </div>
+                            
+                            <button 
+                                class="lazypaste-btn lazypaste-btn-outline lazypaste-action-btn"
+                                onclick="toggleAddNote()"
+                            >
+                                💬 Add Note
+                            </button>
+                            
+                            <!-- Add Note Form -->
+                            <div id="add-note-form" class="lazypaste-note-form hidden">
+                                <textarea
+                                    name="content" 
+                                    id="lazypaste-note-input"
+                                    class="lazypaste-note-textarea"
+                                    placeholder="Enter your note..."
+                                ></textarea>
+                                <div class="lazypaste-form-buttons">
+                                    <button 
+                                        class="lazypaste-btn lazypaste-btn-primary lazypaste-form-btn"
+                                        hx-post="{% url 'claims:add_note' claim.claim_id %}"
+                                        hx-include="#lazypaste-note-input"
+                                        hx-target="#lazypaste-notes-list"
+                                        hx-swap="afterbegin"
+                                        hx-on::after-request="document.getElementById('lazypaste-note-input').value = ''; toggleAddNote();"
+                                    >
+                                        Save Note
+                                    </button>
+                                    <button 
+                                        class="lazypaste-btn lazypaste-btn-outline lazypaste-form-btn"
+                                        onclick="toggleAddNote()"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <button 
+                                class="lazypaste-btn lazypaste-btn-outline lazypaste-action-btn"
+                                onclick="generateReport('{{ claim.claim_id }}')"
+                            >
+                                📊 Generate Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function closeModal() {
+    document.querySelector('.lazypaste-modal-overlay').remove();
+}
+
+function toggleAddNote() {
+    const form = document.getElementById('add-note-form');
+    if (form.classList.contains('hidden')) {
+        form.classList.remove('hidden');
+        document.getElementById('lazypaste-note-input').focus();
+    } else {
+        form.classList.add('hidden');
+        document.getElementById('lazypaste-note-input').value = '';
+    }
+}
+
+function generateReport(claimId) {
+    // Open report in new window/tab
+    window.open(`/report/${claimId}/`, '_blank', 'width=1200,height=900,scrollbars=yes,resizable=yes');
+}
+</script>

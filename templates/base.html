@@ -1,0 +1,210 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Claims Management System{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- HTMX -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/1.9.10/htmx.min.js"></script>
+    
+    <!-- Alpine.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.3/cdn.min.js" defer></script>
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="{% static 'css/claims.css' %}">
+    
+    <style>
+        /* Custom styles for fixed navbar */
+        .navbar-fixed {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: box-shadow 0.3s ease;
+        }
+        
+        /* Add padding to body to account for fixed navbar */
+        body {
+            padding-top: 80px; /* Adjust this value based on your navbar height */
+        }
+        
+        /* Smooth scroll behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body>
+    <!-- Fixed Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top navbar-fixed" style="background: linear-gradient(90deg, #2b6cb0, #2c5282); padding: 1rem 2rem;">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="{% url 'claims:claims_list' %}" style="font-size: 1.4rem;">
+                <i class="bi bi-shield-check me-2" style="font-size: 1.6rem;"></i>
+                Claims Management
+            </a>
+           
+            
+            {% if user.is_authenticated %}
+            <div class="navbar-nav ms-auto">
+                 <!-- Claims Link -->
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{% url 'claims:claims_list' %}" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-list-ul me-1"></i>Claims
+                    </a>
+
+                    <!-- User Profile Picture Only -->
+                    <div class="dropdown">
+                        <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="text-decoration: none;">
+                            {% if user.profile.profile_picture %}
+                                <img src="{{ user.profile.profile_picture.url }}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover; border: 2px solid rgba(255,255,255,0.3); cursor: pointer;">
+                            {% else %}
+                                <div class="rounded-circle bg-light text-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; font-size: 16px; font-weight: bold; border: 2px solid rgba(255,255,255,0.3); cursor: pointer;">
+                                    {{ user.username|first|upper }}
+                                </div>
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow" style="border-radius: 0.75rem; min-width: 200px;">
+                            <li>
+                                <div class="dropdown-header d-flex align-items-center py-2">
+                                    {% if user.profile.profile_picture %}
+                                        <img src="{{ user.profile.profile_picture.url }}" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="rounded-circle bg-primary text-white me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; font-size: 16px; font-weight: bold;">
+                                            {{ user.username|first|upper }}
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        {% if user.get_full_name %}
+                                            <div class="fw-semibold">{{ user.get_full_name }}</div>
+                                            <small class="text-muted">{{ user.username }}</small>
+                                        {% else %}
+                                            <div class="fw-semibold">{{ user.username }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </li>
+                            <li><small class="dropdown-item-text text-muted px-3">{{ user.email }}</small></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'claims:profile' %}">
+                                    <i class="bi bi-person me-2"></i>My Profile
+                                </a>
+                            </li>
+                            {% if user.is_staff %}
+                            <li>
+                                <a class="dropdown-item" href="/dashboard/">
+                                    <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
+                                </a>
+                            </li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="{% url 'auth:logout' %}">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+    
+    <main class="container mt-4">
+        {% block content_header %}{% endblock %}
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Modal Container for HTMX -->
+    <div id="lazypaste-modal-container"></div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Alpine.js data
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('claimsApp', () => ({
+                searchQuery: '',
+                statusFilter: '',
+                showModal: false,
+                searchClaims() {},
+                closeModal() {
+                    this.showModal = false;
+                    document.getElementById('lazypaste-modal-container').innerHTML = '';
+                }
+            }));
+        });
+
+        // HTMX error logging
+        document.addEventListener('htmx:afterRequest', function(event) {
+            if (event.detail.xhr.status >= 400) {
+                console.error('Request failed:', event.detail.xhr.responseText);
+            }
+        });
+
+        // Handle add-note requests
+        document.addEventListener('htmx:beforeRequest', function(event) {
+            if (event.detail.pathInfo.requestPath.includes('add-note')) {
+                const textarea = event.detail.elt.closest('div').querySelector('textarea');
+                if (textarea) {
+                    const content = textarea.value.trim();
+                    if (!content) {
+                        event.preventDefault();
+                        return;
+                    }
+                    event.detail.xhr.setRequestHeader('Content-Type', 'application/json');
+                    event.detail.requestConfig.body = JSON.stringify({ content: content });
+                }
+            }
+        });
+
+        // Clear textarea after successful note addition
+        document.addEventListener('htmx:afterRequest', function(event) {
+            if (event.detail.pathInfo.requestPath.includes('add-note') && event.detail.successful) {
+                const textarea = event.detail.elt.closest('div').querySelector('textarea');
+                if (textarea) {
+                    textarea.value = '';
+                }
+            }
+        });
+
+        // Escape key closes modal
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const modalContainer = document.getElementById('lazypaste-modal-container');
+                if (modalContainer.innerHTML.trim()) {
+                    document.querySelector('[x-data]').__x.$data.closeModal();
+                }
+            }
+        });
+
+        // Global helpers
+        function closeModal() {
+            document.getElementById('lazypaste-modal-container').innerHTML = '';
+        }
+        function toggleAddNote() {
+            const form = document.getElementById('add-note-form');
+            if (form) {
+                form.classList.toggle('hidden');
+            }
+        }
+
+        // Enhanced navbar scroll effect (optional)
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar-fixed');
+            if (window.scrollY > 50) {
+                navbar.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            } else {
+                navbar.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            }
+        });
+    </script>
+</body>
+</html>

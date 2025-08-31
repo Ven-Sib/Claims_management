@@ -1,0 +1,570 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f8fafc;
+    color: #334155;
+    line-height: 1.6;
+}
+
+
+
+/* Main Container */
+.lazypaste-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Search and Filter Bar */
+.lazypaste-search-bar {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.lazypaste-search-input {
+    flex: 1;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem 0.75rem 8rem;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+}
+
+.lazypaste-search-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.lazypaste-filter-btn {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lazypaste-filter-btn:hover {
+    background: #e2e8f0;
+}
+
+/* Claims Table */
+.lazypaste-table-container {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.lazypaste-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.lazypaste-table th {
+    background: #f8fafc;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #475569;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.lazypaste-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.lazypaste-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+/* Status Badges */
+.lazypaste-status {
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: center;
+    min-width: 80px;
+    display: inline-block;
+}
+
+.lazypaste-status.denied {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.lazypaste-status.paid {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.lazypaste-status.under_review {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+/* Action Buttons */
+.lazypaste-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.lazypaste-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.lazypaste-btn-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.lazypaste-btn-primary:hover {
+    background: #2563eb;
+}
+
+.lazypaste-btn-outline {
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+}
+
+.lazypaste-btn-outline:hover {
+    background: #f1f5f9;
+}
+
+.lazypaste-flag-btn {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    transition: all 0.3s ease;
+}
+
+.lazypaste-flag-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 38, 38, 0.2);
+}
+
+.lazypaste-flag-btn.flagged {
+    background: #dc2626;
+    color: white;
+    animation: flagPulse 0.5s ease-in-out;
+}
+
+/* Claim ID Links */
+.lazypaste-claim-link {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.lazypaste-claim-link:hover {
+    text-decoration: underline;
+}
+
+/* Amount Styling */
+.lazypaste-amount {
+    font-weight: 500;
+}
+
+.lazypaste-amount.positive {
+    color: #16a34a;
+}
+
+.lazypaste-amount.negative {
+    color: #dc2626;
+}
+
+/* Modal Overlay */
+.lazypaste-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.lazypaste-modal {
+    background: white;
+    border-radius: 12px;
+    max-width: 900px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Modal Content */
+.lazypaste-detail-container {
+    padding: 2rem;
+}
+
+.lazypaste-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 1rem;
+}
+
+.lazypaste-detail-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.lazypaste-detail-title h2 {
+    color: #3b82f6;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.lazypaste-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #64748b;
+}
+
+.lazypaste-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.lazypaste-detail-card {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.lazypaste-detail-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.lazypaste-field {
+    margin-bottom: 1rem;
+}
+
+.lazypaste-label {
+    font-weight: 600;
+    color: #475569;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.lazypaste-value {
+    font-size: 1.1rem;
+}
+
+.lazypaste-amount-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.lazypaste-amount-positive {
+    color: #16a34a;
+}
+
+.lazypaste-amount-negative {
+    color: #dc2626;
+}
+
+.lazypaste-section {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* CPT Codes */
+.lazypaste-cpt-codes {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.lazypaste-cpt-code {
+    background: #eff6ff;
+    color: #2563eb;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+.lazypaste-denial-reason {
+    color: #dc2626;
+}
+
+/* Notes Section */
+.lazypaste-notes-header {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lazypaste-notes-list {
+    margin-bottom: 2rem;
+}
+
+.lazypaste-note {
+    padding: 1rem;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 1rem;
+}
+
+.lazypaste-note.system {
+    background: #fefce8;
+    border-left: 4px solid #eab308;
+}
+
+.lazypaste-note.admin {
+    background: #f0f9ff;
+    border-left: 4px solid #3b82f6;
+}
+
+.lazypaste-note.user {
+    background: #f8fafc;
+    border-left: 4px solid #64748b;
+}
+
+.lazypaste-note-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.lazypaste-note-type {
+    font-weight: 600;
+}
+
+.lazypaste-note-type.system {
+    color: #ca8a04;
+}
+
+.lazypaste-note-type.admin {
+    color: #2563eb;
+}
+
+.lazypaste-note-type.user {
+    color: #475569;
+}
+
+.lazypaste-note-time {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.lazypaste-note-content {
+    color: #374151;
+}
+
+.lazypaste-no-notes {
+    color: #64748b;
+    text-align: center;
+    padding: 2rem;
+}
+
+/* Quick Actions */
+.lazypaste-actions-header {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.lazypaste-actions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.lazypaste-action-btn {
+    justify-content: flex-start;
+    width: 100%;
+    padding: 0.75rem 1rem;
+}
+
+/* Add Note Form */
+.lazypaste-note-form {
+    margin-top: 0.5rem;
+}
+
+.lazypaste-note-form.hidden {
+    display: none;
+}
+
+.lazypaste-note-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    resize: vertical;
+    min-height: 80px;
+}
+
+.lazypaste-form-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.lazypaste-form-btn {
+    font-size: 0.85rem;
+}
+
+/* Loading States */
+.htmx-request {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.htmx-request::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #3b82f6;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Animations */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes flagPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Focus States */
+.lazypaste-btn:focus,
+.lazypaste-search-input:focus,
+button:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .lazypaste-detail-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .lazypaste-modal {
+        width: 95%;
+        margin: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .lazypaste-container {
+        padding: 1rem;
+    }
+    
+    .lazypaste-search-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .lazypaste-table {
+        font-size: 0.85rem;
+    }
+    
+    .lazypaste-table th,
+    .lazypaste-table td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .lazypaste-detail-info {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Delete button styling */
+.lazypaste-btn-danger {
+    background-color: #dc3545;
+    color: white;
+    border: 1px solid #dc3545;
+    padding: 0.375rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.lazypaste-btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+.lazypaste-btn-danger:disabled {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    cursor: not-allowed;
+}
+
+/* Bulk actions styling */
+.lazypaste-bulk-actions {
+    margin-bottom: 1rem;
+}
+
+.lazypaste-bulk-actions .form-check-input {
+    margin-top: 0.25rem;
+}
+
+/* Action buttons spacing */
+.lazypaste-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.lazypaste-actions button {
+    white-space: nowrap;
+}

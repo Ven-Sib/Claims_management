@@ -1,0 +1,16 @@
+Django>=4.0
+gunicorn>=21.2.0
+whitenoise>=6.5.0
+Pillow==10.0.0  # For image processing
+django-cleanup==6.0.0  # automatically delete old files when updating
+
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        }
+    },
+    {
+        

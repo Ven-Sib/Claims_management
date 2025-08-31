@@ -1,0 +1,167 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}CSV Upload - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-upload"></i> CSV Data Upload</h2>
+        <a href="/dashboard/" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-file-earmark-arrow-up"></i> Upload CSV Files</h5>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" action="/dashboard/process-csv/" enctype="multipart/form-data" id="csvUploadForm">
+                        {% csrf_token %}
+                        
+                        <!-- File Upload Options -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">CSV File 1</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <input type="file" class="form-control mb-2" id="csv_file_1" name="csv_file_1" accept=".csv">
+                                        <small class="text-muted">
+                                            Upload your first CSV file with claims data
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">CSV File 2 (Optional)</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <input type="file" class="form-control mb-2" id="csv_file_2" name="csv_file_2" accept=".csv">
+                                        <small class="text-muted">
+                                            Upload your second CSV file (optional)
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upload Mode Selection -->
+                        <div class="mb-4">
+                            <label class="form-label">Upload Mode</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card upload-mode-card">
+                                        <div class="card-body text-center">
+                                            <input type="radio" class="form-check-input" id="append_mode" name="upload_mode" value="append" checked>
+                                            <label class="form-check-label w-100" for="append_mode">
+                                                <div class="upload-mode-icon text-success mb-2">
+                                                    <i class="bi bi-plus-circle-fill" style="font-size: 2rem;"></i>
+                                                </div>
+                                                <h6>Append Mode</h6>
+                                                <small class="text-muted">
+                                                    Keep existing claims. Add new claims and update existing ones.
+                                                </small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card upload-mode-card">
+                                        <div class="card-body text-center">
+                                            <input type="radio" class="form-check-input" id="overwrite_mode" name="upload_mode" value="overwrite">
+                                            <label class="form-check-label w-100" for="overwrite_mode">
+                                                <div class="upload-mode-icon text-warning mb-2">
+                                                    <i class="bi bi-arrow-repeat" style="font-size: 2rem;"></i>
+                                                </div>
+                                                <h6>Overwrite Mode</h6>
+                                                <small class="text-muted">
+                                                    Delete all existing claims and load fresh data from CSV files.
+                                                </small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Warning for Overwrite Mode -->
+                        <div class="alert alert-warning d-none" id="overwrite_warning">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <strong>Warning:</strong> Overwrite mode will permanently delete all existing claims data. This action cannot be undone.
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg" id="uploadBtn">
+                                <i class="bi bi-upload"></i> Upload CSV File(s)
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Format Info -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-question-circle"></i> Supported CSV Formats</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Claims List Format:</h6>
+                            <code>id|patient_name|billed_amount|paid_amount|status|insurer_name|discharge_date</code>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Claims Detail Format:</h6>
+                            <code>claim_id|cpt_codes|denial_reason</code>
+                        </div>
+                    </div>
+                    <p class="mt-3 mb-0"><strong>Note:</strong> Both file types can create or update claims. Upload order doesn't matter.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Show warning for overwrite mode
+document.querySelectorAll('input[name="upload_mode"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+        const warning = document.getElementById('overwrite_warning');
+        if (this.value === 'overwrite') {
+            warning.classList.remove('d-none');
+        } else {
+            warning.classList.add('d-none');
+        }
+    });
+});
+
+// Form submission handling
+document.getElementById('csvUploadForm').addEventListener('submit', function() {
+    const btn = document.getElementById('uploadBtn');
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+    btn.disabled = true;
+});
+</script>
+{% endblock %}

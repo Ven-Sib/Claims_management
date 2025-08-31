@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <!-- Profile Picture Card -->
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="profile-picture-container mb-3">
+                        <img src="{{ profile.get_profile_picture_url }}" 
+                             alt="Profile Picture" 
+                             class="profile-picture rounded-circle"
+                             id="profile-img">
+                        <div class="profile-picture-overlay">
+                            <i class="bi bi-camera"></i>
+                        </div>
+                    </div>
+                    
+                    <h4>{{ user.get_full_name|default:user.username }}</h4>
+                    <p class="text-muted mb-2">{{ user.email }}</p>
+                    
+                    <div class="mb-3">
+                        {% if user.is_superuser %}
+                            <span class="badge bg-danger">Super Admin</span>
+                        {% elif user.is_staff %}
+                            <span class="badge bg-warning">Admin</span>
+                        {% else %}
+                            <span class="badge bg-primary">Analyst</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Profile Picture Upload -->
+                    <form id="picture-upload-form" method="post" enctype="multipart/form-data" class="mb-3">
+                        {% csrf_token %}
+                        <input type="file" id="picture-input" name="profile_picture" 
+                               accept="image/*" style="display: none;">
+                        <button type="button" class="btn btn-outline-primary btn-sm" 
+                                onclick="document.getElementById('picture-input').click();">
+                            <i class="bi bi-camera"></i> Change Photo
+                        </button>
+                    </form>
+                    
+                    <div class="text-muted small">
+                        <div><strong>Joined:</strong> {{ user.date_joined|date:"M j, Y" }}</div>
+                        <div><strong>Last Login:</strong> 
+                            {% if user.last_login %}
+                                {{ user.last_login|date:"M j, Y g:i A" }}
+                            {% else %}
+                                Never
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <!-- Profile Information Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-person-gear"></i> Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Messages -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Personal Information -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name</label>
+                                {{ form.first_name }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name</label>
+                                {{ form.last_name }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">Email Address</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="text-danger small">{{ form.email.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">Phone Number</label>
+                            {{ form.phone_number }}
+                            {% if form.phone_number.errors %}
+                                <div class="text-danger small">{{ form.phone_number.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.bio.id_for_label }}" class="form-label">Bio</label>
+                            {{ form.bio }}
+                            {% if form.bio.errors %}
+                                <div class="text-danger small">{{ form.bio.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">Tell us a bit about yourself (optional)</small>
+                        </div>
+                        
+                        <!-- Account Information (Read-only) -->
+                        <hr>
+                        <h6 class="mb-3">Account Information</h6>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-control" value="{{ user.username }}" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Account Status</label>
+                                <input type="text" class="form-control" 
+                                       value="{% if user.is_active %}Active{% else %}Inactive{% endif %}" readonly>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Update Profile
+                            </button>
+                            <a href="{% url 'claims:claims_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Claims
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Profile page specific styles that work with fixed navbar */
+.profile-picture-container {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.profile-picture {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border: 4px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.profile-picture-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 50%;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.profile-picture-container:hover .profile-picture-overlay {
+    opacity: 1;
+}
+
+.profile-picture-container:hover .profile-picture {
+    transform: scale(1.05);
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.badge {
+    font-size: 0.8rem;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+/* Ensure proper spacing from fixed navbar */
+.container {
+    padding-top: 0;
+}
+</style>
+
+<script>
+document.getElementById('picture-input').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('profile-img').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+        
+        // Upload via AJAX
+        const formData = new FormData();
+        formData.append('profile_picture', file);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        fetch('{% url "claims:upload_picture" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.card-body').insertBefore(alertDiv, document.querySelector('form'));
+            } else {
+                alert('Error uploading image: ' + JSON.stringify(data.errors));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error uploading image');
+        });
+    }
+});
+
+// Profile picture click to upload
+document.querySelector('.profile-picture-container').addEventListener('click', function() {
+    document.getElementById('picture-input').click();
+});
+</script>
+{% endblock %}

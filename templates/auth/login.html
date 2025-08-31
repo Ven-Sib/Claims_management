@@ -1,0 +1,71 @@
+<!-- Updated login.html -->
+{% extends 'auth_base.html' %}
+
+{% block title %}Login - Claims Management System{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <div class="auth-header">
+        <h2 class="mb-0">Claims Management</h2>
+        <p class="mb-0 mt-2 opacity-75">Sign in to your account</p>
+    </div>
+
+    <div class="auth-body">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-floating mb-3">
+                <input
+                    type="text"
+                    class="form-control"
+                    id="username"
+                    name="username"
+                    placeholder="Username"
+                    required
+                />
+                <label for="username">Username</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input
+                    type="password"
+                    class="form-control"
+                    id="password"
+                    name="password"
+                    placeholder="Password"
+                    required
+                />
+                <label for="password">Password</label>
+            </div>
+
+            <div class="text-end mb-4">
+                <a href="{% url 'auth:password_reset' %}" class="auth-link">Forgot your password?</a>
+            </div>
+
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-auth btn-lg">
+                    Sign In
+                </button>
+            </div>
+        </form>
+
+        <hr class="my-4">
+
+        <div class="text-center">
+            <p class="mb-0">Don't have an account? 
+                <a href="{% url 'auth:signup' %}" class="auth-link">Create one here</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

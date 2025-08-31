@@ -1,0 +1,217 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Manage Users - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-people"></i> User Management</h2>
+        <a href="/dashboard/" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- User Statistics -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <h3 class="text-success">{{ active_users }}</h3>
+                    <p class="text-muted mb-0">Active Users</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-center border-warning">
+                <div class="card-body">
+                    <h3 class="text-warning">{{ admin_users }}</h3>
+                    <p class="text-muted mb-0">Admin Users</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-center border-secondary">
+                <div class="card-body">
+                    <h3 class="text-secondary">{{ inactive_users }}</h3>
+                    <p class="text-muted mb-0">Inactive Users</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-list"></i> User Accounts</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Joined</th>
+                            <th>Last Login</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle me-2">
+                                        {{ user.username|first|upper }}
+                                    </div>
+                                    <div>
+                                        <strong>{{ user.username }}</strong>
+                                        {% if user.first_name or user.last_name %}
+                                            <br><small class="text-muted">{{ user.first_name }} {{ user.last_name }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ user.email|default:"-" }}</td>
+                            <td>
+                                {% if user.is_superuser %}
+                                    <span class="badge bg-danger">Super Admin</span>
+                                {% elif user.is_staff %}
+                                    <span class="badge bg-warning">Admin</span>
+                                {% else %}
+                                    <span class="badge bg-primary">Analyst</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.date_joined|date:"M j, Y" }}</td>
+                            <td>
+                                {% if user.last_login %}
+                                    {{ user.last_login|date:"M j, Y" }}
+                                {% else %}
+                                    <span class="text-muted">Never</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if not user.is_superuser and user != request.user %}
+                                    <div class="btn-group" role="group">
+                                        <!-- Role Management -->
+                                        {% if user.is_staff %}
+                                            <button class="btn btn-outline-warning btn-sm" 
+                                                    onclick="confirmAction('{{ user.id }}', 'remove_staff', 'remove admin privileges from {{ user.username }}')">
+                                                <i class="bi bi-arrow-down-circle"></i> Remove Admin
+                                            </button>
+                                        {% else %}
+                                            <button class="btn btn-outline-success btn-sm" 
+                                                    onclick="confirmAction('{{ user.id }}', 'make_staff', 'promote {{ user.username }} to admin')">
+                                                <i class="bi bi-arrow-up-circle"></i> Make Admin
+                                            </button>
+                                        {% endif %}
+
+                                        <!-- Status Management -->
+                                        {% if user.is_active %}
+                                            <button class="btn btn-outline-danger btn-sm" 
+                                                    onclick="confirmAction('{{ user.id }}', 'deactivate', 'deactivate {{ user.username }}')">
+                                                <i class="bi bi-person-x"></i> Deactivate
+                                            </button>
+                                        {% else %}
+                                            <button class="btn btn-outline-primary btn-sm" 
+                                                    onclick="confirmAction('{{ user.id }}', 'activate', 'activate {{ user.username }}')">
+                                                <i class="bi bi-person-check"></i> Activate
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    {% if user.is_superuser %}
+                                        <span class="text-muted">Super Admin</span>
+                                    {% else %}
+                                        <span class="text-muted">Current User</span>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">No users found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Form for Actions -->
+    <form id="user-action-form" method="post" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="user_id" id="user-id-input">
+        <input type="hidden" name="action" id="action-input">
+    </form>
+</div>
+
+<style>
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.btn-group .btn {
+    margin-right: 2px;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+
+.table td {
+    vertical-align: middle;
+}
+</style>
+
+<script>
+function confirmAction(userId, action, description) {
+    const actionMessages = {
+        'make_staff': 'This will give the user access to admin features including CSV upload, bulk operations, and user management.',
+        'remove_staff': 'This will remove admin privileges and restrict access to analyst-only features.',
+        'activate': 'This will restore the user\'s access to the system.',
+        'deactivate': 'This will prevent the user from logging in and accessing the system.'
+    };
+    
+    const message = `Are you sure you want to ${description}?\n\n${actionMessages[action]}`;
+    
+    if (confirm(message)) {
+        document.getElementById('user-id-input').value = userId;
+        document.getElementById('action-input').value = action;
+        document.getElementById('user-action-form').submit();
+    }
+}
+</script>
+{% endblock %}

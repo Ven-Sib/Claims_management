@@ -1,0 +1,208 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Admin Dashboard - Claims Management System{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-primary bg-opacity-10 text-primary me-3">
+                        <i class="bi bi-file-text"></i>
+                    </div>
+                    <div>
+                        <div class="fs-4 fw-semibold">{{ total_claims }}</div>
+                        <div class="text-muted small">Total Claims</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-warning bg-opacity-10 text-warning me-3">
+                        <i class="bi bi-flag"></i>
+                    </div>
+                    <div>
+                        <div class="fs-4 fw-semibold">{{ flagged_claims }}</div>
+                        <div class="text-muted small">Flagged Claims</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-danger bg-opacity-10 text-danger me-3">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div>
+                        <div class="fs-4 fw-semibold">${{ avg_underpayment|floatformat:0 }}</div>
+                        <div class="text-muted small">Avg Underpayment</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-success bg-opacity-10 text-success me-3">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div>
+                        <div class="fs-4 fw-semibold">{{ total_users }}</div>
+                        <div class="text-muted small">Total Users</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts and Tables Row -->
+<div class="row g-4 mb-4">
+    <!-- Status Distribution -->
+    <div class="col-lg-6">
+        <div class="card content-card">
+            <div class="card-header bg-transparent">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-pie-chart me-2"></i>Claims by Status
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for status in status_stats %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center">
+                        <div class="badge {% if status.status == 'denied' %}bg-danger{% elif status.status == 'paid' %}bg-success{% else %}bg-primary{% endif %} me-2">
+                            {{ status.count }}
+                        </div>
+                        <span class="text-capitalize">{{ status.status|title }}</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="small text-muted me-2">{{ status.percentage }}%</span>
+                        <div class="progress" style="width: 100px; height: 8px;">
+                            <div class="progress-bar {% if status.status == 'denied' %}bg-danger{% elif status.status == 'paid' %}bg-success{% else %}bg-primary{% endif %}" 
+                                style="width: {{ status.percentage }}%">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-lg-6">
+        <div class="card content-card">
+            <div class="card-header bg-transparent">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-lightning me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <a href="{% url 'admin_dashboard:csv_upload' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-cloud-upload me-2"></i>Upload CSV Data
+                    </a>
+                    <a href="{% url 'admin_dashboard:manage_users' %}" class="btn btn-outline-success">
+                        <i class="bi bi-people me-2"></i>Manage Users
+                    </a>
+                    <a href="/admin/" target="_blank" class="btn btn-outline-secondary">
+                        <i class="bi bi-gear me-2"></i>Django Admin Panel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Row -->
+<div class="row g-4">
+    <!-- Recent Claims -->
+    <div class="col-lg-6">
+        <div class="card content-card">
+            <div class="card-header bg-transparent">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-clock me-2"></i>Recent Claims
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_claims %}
+                    <div class="list-group list-group-flush">
+                        {% for claim in recent_claims %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ claim.patient_name }}</h6>
+                                    <p class="mb-1 small text-muted">Claim ID: {{ claim.claim_id }}</p>
+                                    <small class="text-muted">${{ claim.billed_amount|floatformat:2 }}</small>
+                                </div>
+                                <span class="badge {% if claim.status == 'denied' %}bg-danger{% elif claim.status == 'paid' %}bg-success{% else %}bg-primary{% endif %}">
+                                    {{ claim.status|title }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-3">No recent claims found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Notes -->
+    <div class="col-lg-6">
+        <div class="card content-card">
+            <div class="card-header bg-transparent">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-chat-left-text me-2"></i>Recent Notes
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_notes %}
+                    <div class="list-group list-group-flush">
+                        {% for note in recent_notes %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <span class="badge {% if note.note_type == 'system' %}bg-warning{% elif note.note_type == 'admin' %}bg-info{% else %}bg-secondary{% endif %} me-2">
+                                            {% if note.note_type == 'admin' %}
+                                                Admin Note
+                                            {% elif note.note_type == 'system' %}
+                                                System Flag
+                                            {% elif note.created_by %}
+                                                {{ note.created_by.username }}
+                                            {% else %}
+                                                User Note
+                                            {% endif %}
+                                        </span>
+                                        <small class="text-muted">Claim {{ note.claim.claim_id }}</small>
+                                    </div>
+                                    <p class="mb-0 small">{{ note.content|truncatechars:100 }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-3">No recent notes found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

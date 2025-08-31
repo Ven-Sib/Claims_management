@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Claims List{% endblock %}
+
+{% block content_header %}
+    <!-- Banner image above the table -->
+    <div class="text-center mb-4">
+        <img src="{% static 'images/homeimage.jpg' %}"
+             alt="Claims Home"
+             class="img-fluid rounded shadow"
+             style="width: 100%; height: 300px; object-fit: cover;">
+    </div>
+{% endblock %}
+
+{% block content %}
+<div x-data="claimsApp()" class="lazypaste-main">
+    <!-- Search and Filter Section -->
+    <div class="lazypaste-search-bar d-flex align-items-center gap-2 mb-3">
+        <!-- Search Input -->
+        <div style="position: relative; flex: 3;">
+            <input 
+                type="text"
+                class="lazypaste-search-input form-control ps-5"
+                placeholder="Search claims..."
+                value="{{ search_query }}"
+                hx-get="{% url 'claims:search_claims' %}"
+                hx-target="#lazypaste-table-body"
+                hx-trigger="keyup changed delay:300ms"
+                hx-include="[name='status']"
+                name="search"
+            />
+            <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #9ca3af;">
+                🔍
+            </span>
+        </div>
+
+        <!-- Status Filter -->
+        <select 
+            name="status"
+            class="lazypaste-filter-btn form-select"
+            hx-get="{% url 'claims:search_claims' %}"
+            hx-target="#lazypaste-table-body"
+            hx-include="[name='search']"
+            style="max-width: 180px;"
+        >
+            <option value="">All</option>
+            {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+            <option value="flagged" {% if status_filter == 'flagged' %}selected{% endif %}>
+                🚩 Flagged
+            </option>
+        </select>
+    </div>
+
+    <!-- Claims Table -->
+    <div class="lazypaste-table-container card shadow">
+        <div class="card-body p-0">
+            <table class="lazypaste-table table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Claim ID</th>
+                        <th>Patient</th>
+                        <th>Billed</th>
+                        <th>Paid</th>
+                        <th>Status</th>
+                        <th>Insurer</th>
+                        <th>Discharge Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="lazypaste-table-body">
+                    {% include 'claims/claims_table_partial.html' %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
