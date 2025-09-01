@@ -1,10 +1,14 @@
 {% for claim in claims %}
     {% if claim.claim_id %}
-    <tr class="lazypaste-row">
-        <td>
+    <tr class="lazypaste-row lazypaste-clickable-row"
+        hx-get="{% url 'claims:claim_detail' claim.claim_id %}"
+        hx-target="#lazypaste-modal-container"
+        onclick="document.querySelector('[x-data]').__x.$data.showModal = true">
+        <td class="lazypaste-sticky-column">
             <a 
                 href="#"
                 class="lazypaste-claim-link"
+                onclick="event.stopPropagation()"
                 hx-get="{% url 'claims:claim_detail' claim.claim_id %}"
                 hx-target="#lazypaste-modal-container"
                 @click="showModal = true"
@@ -28,6 +32,7 @@
             <div class="lazypaste-actions">
                 <button 
                     class="lazypaste-btn lazypaste-btn-outline"
+                    onclick="event.stopPropagation()"
                     hx-get="{% url 'claims:claim_detail' claim.claim_id %}"
                     hx-target="#lazypaste-modal-container"
                     @click="showModal = true"

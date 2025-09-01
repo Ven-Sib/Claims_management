@@ -585,3 +585,175 @@ button:focus {
         padding: 1rem;
     }
 }
+
+/* RESPONSIVE TABLE ADDITIONS - Add these to your existing claims.css */
+
+/* Horizontal Scroll Wrapper */
+.lazypaste-table-scroll-wrapper {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch; /* Smooth momentum scrolling on iOS */
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e0 #f7fafc;
+}
+
+/* Custom scrollbar for WebKit browsers */
+.lazypaste-table-scroll-wrapper::-webkit-scrollbar {
+    height: 8px;
+}
+
+.lazypaste-table-scroll-wrapper::-webkit-scrollbar-track {
+    background: #f7fafc;
+    border-radius: 4px;
+}
+
+.lazypaste-table-scroll-wrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+}
+
+.lazypaste-table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+/* Sticky First Column */
+.lazypaste-sticky-column {
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 10;
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+    min-width: 120px;
+}
+
+/* Sticky column in table header */
+.lazypaste-table thead th.lazypaste-sticky-column {
+    background: #f8fafc;
+    z-index: 11;
+}
+
+/* Ensure table has minimum width for horizontal scroll */
+.lazypaste-table {
+    min-width: 800px;
+    width: 100%;
+}
+
+/* Clickable Row Styling */
+.lazypaste-clickable-row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.lazypaste-clickable-row:hover {
+    background-color: #f8fafc !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.lazypaste-clickable-row:active {
+    transform: translateY(0);
+}
+
+/* Prevent double hover effects on interactive elements within rows */
+.lazypaste-clickable-row .lazypaste-btn:hover {
+    transform: none;
+}
+
+.lazypaste-clickable-row .lazypaste-claim-link:hover {
+    background: none;
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 768px) {
+    /* Increase touch targets on mobile */
+    .lazypaste-table td {
+        padding: 1.25rem 0.75rem;
+    }
+    
+    .lazypaste-clickable-row {
+        cursor: pointer;
+    }
+    
+    /* Hide less important columns on very small screens */
+    .lazypaste-table th:nth-child(6),
+    .lazypaste-table td:nth-child(6) {
+        display: none;
+    }
+    
+    .lazypaste-table th:nth-child(7),
+    .lazypaste-table td:nth-child(7) {
+        display: none;
+    }
+    
+    /* Adjust sticky column width on mobile */
+    .lazypaste-sticky-column {
+        min-width: 100px;
+    }
+    
+    /* Show scroll hint on mobile */
+    .lazypaste-table-scroll-wrapper::after {
+        content: "← Scroll to see more →";
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        font-size: 0.75rem;
+        color: #64748b;
+        background: rgba(248, 250, 252, 0.9);
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        pointer-events: none;
+        animation: fadeInOut 3s ease-in-out;
+    }
+}
+
+/* Scroll hint animation */
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
+}
+
+/* Very small screens - show only essential columns */
+@media (max-width: 480px) {
+    .lazypaste-table th:nth-child(5),
+    .lazypaste-table td:nth-child(5) {
+        display: none;
+    }
+    
+    .lazypaste-table th:nth-child(4),
+    .lazypaste-table td:nth-child(4) {
+        display: none;
+    }
+    
+    /* Reduce padding further */
+    .lazypaste-table td {
+        padding: 1rem 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .lazypaste-sticky-column {
+        min-width: 90px;
+    }
+}
+
+/* Touch interaction improvements */
+@media (hover: none) and (pointer: coarse) {
+    /* Mobile touch devices */
+    .lazypaste-clickable-row {
+        -webkit-tap-highlight-color: rgba(59, 130, 246, 0.1);
+    }
+    
+    .lazypaste-clickable-row:active {
+        background-color: #eff6ff !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .lazypaste-sticky-column {
+        border-right: 2px solid #000;
+    }
+    
+    .lazypaste-clickable-row:hover {
+        border: 2px solid #0066cc;
+    }
+}

@@ -56,26 +56,29 @@
         </select>
     </div>
 
-    <!-- Claims Table -->
+    <!-- Claims Table with Horizontal Scroll Wrapper -->
     <div class="lazypaste-table-container card shadow">
         <div class="card-body p-0">
-            <table class="lazypaste-table table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Claim ID</th>
-                        <th>Patient</th>
-                        <th>Billed</th>
-                        <th>Paid</th>
-                        <th>Status</th>
-                        <th>Insurer</th>
-                        <th>Discharge Date</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="lazypaste-table-body">
-                    {% include 'claims/claims_table_partial.html' %}
-                </tbody>
-            </table>
+            <!-- Horizontal scroll wrapper -->
+            <div class="lazypaste-table-scroll-wrapper">
+                <table class="lazypaste-table table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="lazypaste-sticky-column">Claim ID</th>
+                            <th>Patient</th>
+                            <th>Billed</th>
+                            <th>Paid</th>
+                            <th>Status</th>
+                            <th>Insurer</th>
+                            <th>Discharge Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lazypaste-table-body">
+                        {% include 'claims/claims_table_partial.html' %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
