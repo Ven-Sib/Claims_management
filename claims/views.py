@@ -302,3 +302,40 @@ def upload_profile_picture(request):
             })
     
     return JsonResponse({'success': False, 'message': 'Invalid request'})
+
+
+import os
+from django.http import JsonResponse
+from django.conf import settings
+
+def debug_files(request):
+    base_dir = settings.BASE_DIR
+    media_root = settings.MEDIA_ROOT
+    
+    # Check what exists
+    result = {
+        'BASE_DIR': str(base_dir),
+        'MEDIA_ROOT': str(media_root),
+        'MEDIA_URL': settings.MEDIA_URL,
+        'base_dir_contents': [],
+        'media_exists': os.path.exists(media_root),
+        'media_contents': [],
+        'profile_pics_exists': False,
+        'profile_pics_contents': []
+    }
+    
+    # Check base directory
+    if os.path.exists(base_dir):
+        result['base_dir_contents'] = os.listdir(base_dir)
+    
+    # Check media directory
+    if os.path.exists(media_root):
+        result['media_contents'] = os.listdir(media_root)
+        
+        # Check profile_pictures subdirectory
+        profile_pics_path = os.path.join(media_root, 'profile_pictures')
+        if os.path.exists(profile_pics_path):
+            result['profile_pics_exists'] = True
+            result['profile_pics_contents'] = os.listdir(profile_pics_path)
+    
+    return JsonResponse(result, json_dumps_params={'indent': 2})
