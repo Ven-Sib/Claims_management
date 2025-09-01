@@ -339,3 +339,26 @@ def debug_files(request):
             result['profile_pics_contents'] = os.listdir(profile_pics_path)
     
     return JsonResponse(result, json_dumps_params={'indent': 2})
+
+def debug_user_profile(request):
+    if request.user.is_authenticated:
+        try:
+            profile = request.user.profile
+            profile_data = {
+                'has_profile': True,
+                'profile_picture': str(profile.profile_picture) if profile.profile_picture else None,
+                'profile_picture_exists': bool(profile.profile_picture),
+                'profile_picture_url': profile.profile_picture.url if profile.profile_picture else None,
+            }
+        except:
+            profile_data = {
+                'has_profile': False,
+                'error': 'No profile object exists for this user'
+            }
+        
+        return JsonResponse({
+            'user': request.user.username,
+            'profile_data': profile_data
+        }, json_dumps_params={'indent': 2})
+    else:
+        return JsonResponse({'error': 'Not authenticated'})

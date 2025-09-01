@@ -15,4 +15,5 @@ urlpatterns = [
     path('profile/', views.profile_view, name='profile'),
     path('profile/upload-picture/', views.upload_profile_picture, name='upload_picture'),
     path('debug-files/', views.debug_files, name='debug_files'),
+    path('debug-profile/', views.debug_user_profile, name='debug_user_profile'),
 ]
