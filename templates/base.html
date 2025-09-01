@@ -22,10 +22,11 @@
     <link rel="stylesheet" href="{% static 'css/claims.css' %}">
     
     <style>
-        /* Custom styles for fixed navbar */
+        /* Fixed navbar with proper z-index */
         .navbar-fixed {
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             transition: box-shadow 0.3s ease;
+            z-index: 1030; /* Bootstrap standard navbar z-index */
         }
         
         /* Add padding to body to account for fixed navbar */
@@ -37,18 +38,35 @@
         html {
             scroll-behavior: smooth;
         }
+
+        /* Ensure proper z-index hierarchy */
+        .navbar {
+            z-index: 1030;
+        }
+        
+        .dropdown-menu {
+            z-index: 1031;
+        }
+        
+        /* Modal should be above everything */
+        .lazypaste-modal-overlay {
+            z-index: 2000 !important;
+        }
+        
+        .lazypaste-modal {
+            z-index: 2010 !important;
+        }
     </style>
 </head>
 <body>
-    <!-- Fixed Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top navbar-fixed" style="background: linear-gradient(90deg, #2b6cb0, #2c5282); padding: 1rem 2rem;">
+    <!-- Fixed Navbar with explicit z-index -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top navbar-fixed" style="background: linear-gradient(90deg, #2b6cb0, #2c5282); padding: 1rem 2rem; z-index: 1030;">
         <div class="container-fluid">
             <a class="navbar-brand fw-bold d-flex align-items-center" href="{% url 'claims:claims_list' %}" style="font-size: 1.4rem;">
                 <i class="bi bi-shield-check me-2" style="font-size: 1.6rem;"></i>
                 Claims Management
             </a>
            
-            
             {% if user.is_authenticated %}
             <div class="navbar-nav ms-auto">
                  <!-- Claims Link -->
@@ -68,7 +86,7 @@
                                 </div>
                             {% endif %}
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end shadow" style="border-radius: 0.75rem; min-width: 200px;">
+                        <ul class="dropdown-menu dropdown-menu-end shadow" style="border-radius: 0.75rem; min-width: 200px; z-index: 1031;">
                             <li>
                                 <div class="dropdown-header d-flex align-items-center py-2">
                                     {% if user.profile.profile_picture %}
@@ -121,8 +139,8 @@
         {% block content %}{% endblock %}
     </main>
     
-    <!-- Modal Container for HTMX -->
-    <div id="lazypaste-modal-container"></div>
+    <!-- Modal Container for HTMX with proper z-index -->
+    <div id="lazypaste-modal-container" style="z-index: 2000;"></div>
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -159,8 +177,6 @@
                         event.preventDefault();
                         return;
                     }
-                    event.detail.xhr.setRequestHeader('Content-Type', 'application/json');
-                    event.detail.requestConfig.body = JSON.stringify({ content: content });
                 }
             }
         });
@@ -180,7 +196,7 @@
             if (event.key === 'Escape') {
                 const modalContainer = document.getElementById('lazypaste-modal-container');
                 if (modalContainer.innerHTML.trim()) {
-                    document.querySelector('[x-data]').__x.$data.closeModal();
+                    closeModal();
                 }
             }
         });
@@ -189,14 +205,19 @@
         function closeModal() {
             document.getElementById('lazypaste-modal-container').innerHTML = '';
         }
+        
         function toggleAddNote() {
             const form = document.getElementById('add-note-form');
             if (form) {
                 form.classList.toggle('hidden');
+                if (!form.classList.contains('hidden')) {
+                    const textarea = form.querySelector('textarea');
+                    if (textarea) textarea.focus();
+                }
             }
         }
 
-        // Enhanced navbar scroll effect (optional)
+        // Enhanced navbar scroll effect
         window.addEventListener('scroll', function() {
             const navbar = document.querySelector('.navbar-fixed');
             if (window.scrollY > 50) {

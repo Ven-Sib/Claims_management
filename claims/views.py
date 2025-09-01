@@ -15,12 +15,14 @@ from .models import UserProfile
 
 from .models import Claim, ClaimNote
 
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
 @login_required
 def lazypaste_claims_list(request):
-    """Main claims list view with search and filter functionality"""
-    claims = Claim.objects.all()
+    """Main claims list view with search, filter, and pagination functionality"""
+    claims = Claim.objects.all().order_by('claim_id')  # Order by claim ID ascending (30001, 30002, etc.)
     
-    # Search functionality - robustness in query handling
+    # Search functionality
     search_query = request.GET.get('search', '')
     if search_query:
         claims = claims.filter(
@@ -33,13 +35,32 @@ def lazypaste_claims_list(request):
     # Filter by status
     status_filter = request.GET.get('status', '')
     if status_filter:
-        claims = claims.filter(status=status_filter)
+        if status_filter == 'flagged':
+            claims = claims.filter(is_flagged=True)
+        else:
+            claims = claims.filter(status=status_filter)
+    
+    # Pagination - 25 claims per page
+    paginator = Paginator(claims, 25)
+    page_number = request.GET.get('page')
+    
+    try:
+        page_obj = paginator.get_page(page_number)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range, deliver last page
+        page_obj = paginator.page(paginator.num_pages)
     
     context = {
-        'claims': claims,
+        'claims': page_obj,
+        'page_obj': page_obj,
+        'paginator': paginator,
         'search_query': search_query,
         'status_filter': status_filter,
         'status_choices': Claim.STATUS_CHOICES,
+        'is_paginated': paginator.num_pages > 1,
     }
     
     return render(request, 'claims/claims_list.html', context)
@@ -130,11 +151,12 @@ def lazypaste_add_note(request, claim_id):
 
 @login_required
 def lazypaste_search_claims(request):
-    """HTMX search endpoint for dynamic filtering"""
+    """HTMX search endpoint for dynamic filtering with pagination"""
     search_query = request.GET.get('search', '')
     status_filter = request.GET.get('status', '')
+    page_number = request.GET.get('page', 1)
     
-    claims = Claim.objects.all()
+    claims = Claim.objects.all().order_by('claim_id')  # Order by claim ID ascending
     
     if search_query:
         claims = claims.filter(
@@ -149,9 +171,21 @@ def lazypaste_search_claims(request):
         else:
             claims = claims.filter(status=status_filter)
     
-    return render(request, 'claims/claims_table_partial.html', {
-        'claims': claims
-    })
+    # Pagination for HTMX requests
+    paginator = Paginator(claims, 25)
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'claims': page_obj,
+        'page_obj': page_obj,
+        'paginator': paginator,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'is_paginated': paginator.num_pages > 1,
+    }
+    
+    # Return the full table section for HTMX replacement
+    return render(request, 'claims/claims_table_partial.html', context)
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.http import require_http_methods

@@ -24,7 +24,26 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-tzw8frjs))=yb_+h^6x89
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Add this for Render
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
+
+# if DEBUG:
+#     # Local/dev settings
+#     SECURE_SSL_REDIRECT = False
+#     SESSION_COOKIE_SECURE = False
+#     CSRF_COOKIE_SECURE = False
+# else:
+#     # Production security settings
+#     SECURE_BROWSER_XSS_FILTER = True
+#     SECURE_CONTENT_TYPE_NOSNIFF = True
+#     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+#     SECURE_HSTS_SECONDS = 31536000
+#     SECURE_REDIRECT_EXEMPT = []
+#     SECURE_SSL_REDIRECT = True
+#     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+#     X_FRAME_OPTIONS = 'DENY'
+#     SECURE_HSTS_PRELOAD = True
+#     SESSION_COOKIE_SECURE = True
+#     CSRF_COOKIE_SECURE = True
 
 # Update ALLOWED_HOSTS for Render deployment
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'claims-management-mhb2.onrender.com']

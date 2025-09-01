@@ -1,50 +1,120 @@
 {% for claim in claims %}
-{% if claim.claim_id %}
-<tr class="lazypaste-row">
-    <td>
-        <a 
-            href="#" 
-            class="lazypaste-claim-link"
-            hx-get="{% url 'claims:claim_detail' claim.claim_id %}"
-            hx-target="#lazypaste-modal-container"
-            @click="showModal = true"
-        >
-            {{ claim.claim_id }}
-        </a>
-    </td>
-    <td>{{ claim.patient_name }}</td>
-    <td class="lazypaste-amount">${{ claim.billed_amount|floatformat:2 }}</td>
-    <td class="lazypaste-amount {% if claim.paid_amount > 0 %}positive{% else %}negative{% endif %}">
-        ${{ claim.paid_amount|floatformat:2 }}
-    </td>
-    <td>
-        <span class="lazypaste-status {{ claim.status }}">
-            {% if claim.status == 'denied' %}Denied{% elif claim.status == 'paid' %}Paid{% elif claim.status == 'under_review' %}Under Review{% endif %}
-        </span>
-    </td>
-    <td>{{ claim.insurer }}</td>
-    <td>{{ claim.discharge_date|date:"n/j/Y" }}</td>
-    <td>
-        <div class="lazypaste-actions">
-            <button 
-                class="lazypaste-btn lazypaste-btn-outline"
+    {% if claim.claim_id %}
+    <tr class="lazypaste-row">
+        <td>
+            <a 
+                href="#"
+                class="lazypaste-claim-link"
                 hx-get="{% url 'claims:claim_detail' claim.claim_id %}"
                 hx-target="#lazypaste-modal-container"
                 @click="showModal = true"
             >
-                👁️ View
-            </button>
-            {% if claim.is_flagged %}
-                <span class="lazypaste-flag-indicator" title="Review me">🚩</span>
-            {% endif %}
+                {{ claim.claim_id }}
+            </a>
+        </td>
+        <td>{{ claim.patient_name }}</td>
+        <td class="lazypaste-amount">${{ claim.billed_amount|floatformat:2 }}</td>
+        <td class="lazypaste-amount {% if claim.paid_amount > 0 %}positive{% else %}negative{% endif %}">
+            ${{ claim.paid_amount|floatformat:2 }}
+        </td>
+        <td>
+            <span class="lazypaste-status {{ claim.status }}">
+                {% if claim.status == 'denied' %}Denied{% elif claim.status == 'paid' %}Paid{% elif claim.status == 'under_review' %}Under Review{% endif %}
+            </span>
+        </td>
+        <td>{{ claim.insurer }}</td>
+        <td>{{ claim.discharge_date|date:"n/j/Y" }}</td>
+        <td>
+            <div class="lazypaste-actions">
+                <button 
+                    class="lazypaste-btn lazypaste-btn-outline"
+                    hx-get="{% url 'claims:claim_detail' claim.claim_id %}"
+                    hx-target="#lazypaste-modal-container"
+                    @click="showModal = true"
+                >
+                    👁️ View
+                </button>
+                {% if claim.is_flagged %}
+                    <span class="lazypaste-flag-indicator" title="Review me">🚩</span>
+                {% endif %}
+            </div>
+        </td>
+    </tr>
+    {% endif %}
+{% empty %}
+    <tr>
+        <td colspan="8" class="lazypaste-no-claims">
+            No claims found matching your criteria.
+        </td>
+    </tr>
+{% endfor %}
+
+<!-- Pagination for HTMX requests -->
+{% if is_paginated %}
+<tr>
+    <td colspan="8" class="p-0">
+        <div class="d-flex justify-content-between align-items-center p-3 bg-light">
+            <div>
+                <span class="text-muted">
+                    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} 
+                    of {{ paginator.count }} claims
+                </span>
+            </div>
+            
+            <nav aria-label="Claims pagination">
+                <ul class="pagination mb-0">
+                    <!-- Previous page -->
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" 
+                               href="#"
+                               hx-get="{% url 'claims:search_claims' %}?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"
+                               hx-target="#lazypaste-table-body">
+                                &laquo; Previous
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&laquo; Previous</span>
+                        </li>
+                    {% endif %}
+
+                    <!-- Page numbers - show current page and 2 pages around it -->
+                    {% for num in paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" 
+                                   href="#"
+                                   hx-get="{% url 'claims:search_claims' %}?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"
+                                   hx-target="#lazypaste-table-body">
+                                    {{ num }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- Next page -->
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" 
+                               href="#"
+                               hx-get="{% url 'claims:search_claims' %}?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"
+                               hx-target="#lazypaste-table-body">
+                                Next &raquo;
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Next &raquo;</span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
         </div>
     </td>
 </tr>
 {% endif %}
-{% empty %}
-<tr>
-    <td colspan="8" class="lazypaste-no-claims">
-        No claims found matching your criteria.
-    </td>
-</tr>
-{% endfor %}
