@@ -22,16 +22,16 @@
     <link rel="stylesheet" href="{% static 'css/claims.css' %}">
     
     <style>
-        /* Fixed navbar with proper z-index */
+        /* navbar with proper z-index */
         .navbar-fixed {
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             transition: box-shadow 0.3s ease;
             z-index: 1030; /* Bootstrap standard navbar z-index */
         }
         
-        /* Add padding to body to account for fixed navbar */
+        /* Add padding to body to account for navbar */
         body {
-            padding-top: 80px; /* Adjust this value based on your navbar height */
+            padding-top: 80px; 
         }
         
         /* Smooth scroll behavior */
@@ -59,7 +59,7 @@
     </style>
 </head>
 <body>
-    <!-- Fixed Navbar with explicit z-index -->
+    <!-- Navbar with explicit z-index -->
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top navbar-fixed" style="background: linear-gradient(90deg, #2b6cb0, #2c5282); padding: 1rem 2rem; z-index: 1030;">
         <div class="container-fluid">
             <a class="navbar-brand fw-bold d-flex align-items-center" href="{% url 'claims:claims_list' %}" style="font-size: 1.4rem;">

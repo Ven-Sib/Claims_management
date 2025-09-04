@@ -4,17 +4,13 @@ from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
+# SECURITY KEY(hidden)
 SECRET_KEY = config('SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# debug turned off for production
 DEBUG = config('DJANGO_DEBUG', default=False, cast=bool)
 
-# Update ALLOWED_HOSTS for Render deployment
+# Updated allowed hosts for remnder and local
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
 # Application definition
@@ -31,7 +27,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'claims.middleware.MediaServeMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add WhiteNoise for static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # WhiteNoise for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -109,7 +105,7 @@ if os.path.exists(static_dir):
 # WhiteNoise configuration for better static file serving
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Add these new lines here:
+# whitenoise not to interfere with media files
 WHITENOISE_SKIP_COMPRESS_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico', 'woff', 'woff2']
 WHITENOISE_MAX_AGE = 0
 

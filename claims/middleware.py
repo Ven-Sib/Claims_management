@@ -8,7 +8,7 @@ class MediaServeMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # Check if this is a media file request
+        # Check if is a media file request
         if request.path.startswith(settings.MEDIA_URL):
             return self.serve_media(request)
         

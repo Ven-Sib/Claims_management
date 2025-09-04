@@ -1,4 +1,3 @@
-# claims/auth_views.py
 import re
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout

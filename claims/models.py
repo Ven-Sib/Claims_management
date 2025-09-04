@@ -14,15 +14,15 @@ class Claim(models.Model):
         ('under_review', 'Under Review'),
     ]
     
-    claim_id = models.CharField(max_length=20, unique=True)  # e.g., "30001"
-    patient_name = models.CharField(max_length=200)  # e.g., "Virginia Rhodes"
-    billed_amount = models.DecimalField(max_digits=12, decimal_places=2)  # Implementing robustness in decimal handling
+    claim_id = models.CharField(max_length=20, unique=True)  
+    patient_name = models.CharField(max_length=200)  
+    billed_amount = models.DecimalField(max_digits=12, decimal_places=2) 
     paid_amount = models.DecimalField(max_digits=12, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
-    insurer = models.CharField(max_length=200)  # e.g., "United Healthcare"
+    insurer = models.CharField(max_length=200) 
     discharge_date = models.DateField()
     
-    # CPT codes as a simple text field for now - robustness considerations for future JSON field
+    # CPT codes as a simple text field 
     cpt_codes = models.TextField(help_text="Comma-separated CPT codes")
     denial_reason = models.TextField(blank=True, null=True)
     
@@ -112,7 +112,7 @@ class UserProfile(models.Model):
             return self.profile_picture.url
         else:
             # Return default avatar URL
-            return '/static/images/default-avatar.png'
+            return '/static/images/homeie.jpeg'
     
     class Meta:
         ordering = ['-created_at']

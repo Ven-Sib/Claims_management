@@ -1,4 +1,4 @@
-# views.py for claims app
+import os
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -12,9 +12,8 @@ from decimal import Decimal
 from django.utils import timezone
 from .forms import UserProfileForm, ProfilePictureForm
 from .models import UserProfile
-
 from .models import Claim, ClaimNote
-
+from django.conf import settings
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 @login_required
@@ -139,7 +138,7 @@ def lazypaste_add_note(request, claim_id):
                 created_by=request.user
             )
                 
-                # Return rendered HTML instead of JSON
+                # Return rendered HTML 
                 return render(request, 'claims/note_partial.html', {'note': note})
             
         except Exception as e:
@@ -187,67 +186,6 @@ def lazypaste_search_claims(request):
     # Return the full table section for HTMX replacement
     return render(request, 'claims/claims_table_partial.html', context)
 
-from django.contrib.admin.views.decorators import staff_member_required
-from django.views.decorators.http import require_http_methods
-
-@login_required
-@staff_member_required
-@require_http_methods(["DELETE", "POST"])
-def lazypaste_delete_claim(request, claim_id):
-    """Delete individual claim - admin only"""
-    try:
-        claim = get_object_or_404(Claim, claim_id=claim_id)
-        claim_id_display = claim.claim_id
-        claim.delete()
-        
-        if request.headers.get('HX-Request'):
-            # HTMX request - return success message
-            return HttpResponse(f'''
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    Claim {claim_id_display} has been deleted successfully.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            ''')
-        else:
-            messages.success(request, f'Claim {claim_id_display} has been deleted successfully.')
-            return redirect('claims:claims_list')
-            
-    except Exception as e:
-        if request.headers.get('HX-Request'):
-            return HttpResponse(f'''
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    Error deleting claim: {str(e)}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            ''')
-        else:
-            messages.error(request, f'Error deleting claim: {str(e)}')
-            return redirect('claims:claims_list')
-
-@login_required
-@staff_member_required  
-@require_http_methods(["POST"])
-def lazypaste_bulk_delete_claims(request):
-    """Delete multiple claims - admin only"""
-    try:
-        claim_ids = request.POST.getlist('selected_claims')
-        
-        if not claim_ids:
-            messages.error(request, 'No claims selected for deletion.')
-            return redirect('claims:claims_list')
-        
-        # Get claims and delete them
-        claims = Claim.objects.filter(claim_id__in=claim_ids)
-        deleted_count = claims.count()
-        claims.delete()
-        
-        messages.success(request, f'{deleted_count} claims have been deleted successfully.')
-        return redirect('claims:claims_list')
-        
-    except Exception as e:
-        messages.error(request, f'Error deleting claims: {str(e)}')
-        return redirect('claims:claims_list')
-    
 @login_required
 def lazypaste_generate_report(request, claim_id):
     """Generate individual claim report"""
@@ -280,8 +218,7 @@ def lazypaste_generate_report(request, claim_id):
     format_type = request.GET.get('format', 'html')
     
     if format_type == 'pdf':
-        # For PDF generation, you'd use a library like WeasyPrint or ReportLab
-        # For now, we'll return HTML that can be printed
+        # return HTML that can be printed
         html_content = render_to_string('claims/claim_report.html', context, request)
         response = HttpResponse(html_content, content_type='text/html')
         response['Content-Disposition'] = f'inline; filename="claim_{claim.claim_id}_report.html"'
@@ -338,61 +275,3 @@ def upload_profile_picture(request):
     return JsonResponse({'success': False, 'message': 'Invalid request'})
 
 
-import os
-from django.http import JsonResponse
-from django.conf import settings
-
-def debug_files(request):
-    base_dir = settings.BASE_DIR
-    media_root = settings.MEDIA_ROOT
-    
-    # Check what exists
-    result = {
-        'BASE_DIR': str(base_dir),
-        'MEDIA_ROOT': str(media_root),
-        'MEDIA_URL': settings.MEDIA_URL,
-        'base_dir_contents': [],
-        'media_exists': os.path.exists(media_root),
-        'media_contents': [],
-        'profile_pics_exists': False,
-        'profile_pics_contents': []
-    }
-    
-    # Check base directory
-    if os.path.exists(base_dir):
-        result['base_dir_contents'] = os.listdir(base_dir)
-    
-    # Check media directory
-    if os.path.exists(media_root):
-        result['media_contents'] = os.listdir(media_root)
-        
-        # Check profile_pictures subdirectory
-        profile_pics_path = os.path.join(media_root, 'profile_pictures')
-        if os.path.exists(profile_pics_path):
-            result['profile_pics_exists'] = True
-            result['profile_pics_contents'] = os.listdir(profile_pics_path)
-    
-    return JsonResponse(result, json_dumps_params={'indent': 2})
-
-def debug_user_profile(request):
-    if request.user.is_authenticated:
-        try:
-            profile = request.user.profile
-            profile_data = {
-                'has_profile': True,
-                'profile_picture': str(profile.profile_picture) if profile.profile_picture else None,
-                'profile_picture_exists': bool(profile.profile_picture),
-                'profile_picture_url': profile.profile_picture.url if profile.profile_picture else None,
-            }
-        except:
-            profile_data = {
-                'has_profile': False,
-                'error': 'No profile object exists for this user'
-            }
-        
-        return JsonResponse({
-            'user': request.user.username,
-            'profile_data': profile_data
-        }, json_dumps_params={'indent': 2})
-    else:
-        return JsonResponse({'error': 'Not authenticated'})
