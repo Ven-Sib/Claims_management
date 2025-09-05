@@ -142,11 +142,12 @@
                                     placeholder="Enter your note..."
                                 ></textarea>
                                 <div class="lazypaste-form-buttons">
-                                    <!-- UPDATED: Removed hx-target and hx-swap since polling handles updates -->
                                     <button 
                                         class="lazypaste-btn lazypaste-btn-primary lazypaste-form-btn"
                                         hx-post="{% url 'claims:add_note' claim.claim_id %}"
                                         hx-include="#lazypaste-note-input"
+                                        hx-target="#lazypaste-notes-list"
+                                        hx-swap="afterbegin"
                                         hx-on::after-request="document.getElementById('lazypaste-note-input').value = ''; toggleAddNote();"
                                     >
                                         Save Note
