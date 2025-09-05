@@ -1,17 +1,23 @@
+{% load claim_filters %}
+
+{% for note in notes %}
 <div class="lazypaste-note {{ note.note_type }}">
     <div class="lazypaste-note-header">
         <span class="lazypaste-note-type {{ note.note_type }}">
-            {% if note.note_type == 'admin' %}
-                Admin Note
-            {% elif note.note_type == 'system' %}
-                System Flag
-            {% elif note.created_by %}
-                {{ note.created_by.username }}
-            {% else %}
-                User Note
-            {% endif %}
-        </span>
+        {% if note.note_type == 'admin' %}
+            Admin Note
+        {% elif note.note_type == 'system' %}
+            System Flag
+        {% elif note.created_by %}
+            {{ note.created_by.username }}
+        {% else %}
+            User Note
+        {% endif %}
+    </span>
         <span class="lazypaste-note-time">{{ note.created_at|timesince }} ago</span>
     </div>
     <p class="lazypaste-note-content">{{ note.content }}</p>
 </div>
+{% empty %}
+<p class="lazypaste-no-notes">No notes yet.</p>
+{% endfor %}

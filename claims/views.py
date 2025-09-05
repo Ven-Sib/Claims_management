@@ -121,6 +121,16 @@ def lazypaste_flag_claim(request, claim_id):
     return JsonResponse({'success': False})
 
 @login_required
+def lazypaste_get_notes(request, claim_id):
+    """Get all notes for a claim - used for polling updates"""
+    claim = get_object_or_404(Claim, claim_id=claim_id)
+    notes = ClaimNote.objects.filter(claim=claim).order_by('-created_at')
+    
+    return render(request, 'claims/notes_list_partial.html', {
+        'notes': notes
+    })
+
+@login_required
 @csrf_exempt
 def lazypaste_add_note(request, claim_id):
     """Add a note to a claim"""

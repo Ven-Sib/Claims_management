@@ -8,6 +8,7 @@ urlpatterns = [
     path('claim/<str:claim_id>/', views.lazypaste_claim_detail, name='claim_detail'),
     path('api/flag/<str:claim_id>/', views.lazypaste_flag_claim, name='flag_claim'),
     path('api/add-note/<str:claim_id>/', views.lazypaste_add_note, name='add_note'),
+    path('api/notes/<str:claim_id>/', views.lazypaste_get_notes, name='get_notes'),
     path('api/search/', views.lazypaste_search_claims, name='search_claims'),  
     path('report/<str:claim_id>/', views.lazypaste_generate_report, name='generate_report'),
     path('profile/', views.profile_view, name='profile'),

@@ -69,7 +69,12 @@
                     <div class="lazypaste-notes-list">
                         <h3 class="lazypaste-notes-header">💬 Notes & Annotations</h3>
                         
-                        <div id="lazypaste-notes-list">
+                        <!-- UPDATED: Added polling with 1-second intervals -->
+                        <div id="lazypaste-notes-list"
+                            hx-get="{% url 'claims:get_notes' claim.claim_id %}"
+                            hx-trigger="every 1s"
+                            hx-swap="innerHTML"
+                            hx-indicator="none">
                             {% for note in notes %}
                             <div class="lazypaste-note {{ note.note_type }}">
                                 <div class="lazypaste-note-header">
@@ -137,12 +142,11 @@
                                     placeholder="Enter your note..."
                                 ></textarea>
                                 <div class="lazypaste-form-buttons">
+                                    <!-- UPDATED: Removed hx-target and hx-swap since polling handles updates -->
                                     <button 
                                         class="lazypaste-btn lazypaste-btn-primary lazypaste-form-btn"
                                         hx-post="{% url 'claims:add_note' claim.claim_id %}"
                                         hx-include="#lazypaste-note-input"
-                                        hx-target="#lazypaste-notes-list"
-                                        hx-swap="afterbegin"
                                         hx-on::after-request="document.getElementById('lazypaste-note-input').value = ''; toggleAddNote();"
                                     >
                                         Save Note
