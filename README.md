@@ -4,15 +4,19 @@ A Django-based web application for managing insurance claims with features for c
 
 ## Features
 
-- **Claims Dashboard** - Paginated list of all insurance claims with search and filtering
-- **Claim Details Modal** - Detailed view with notes, actions, and status tracking
+- **CSV/JSON Data Loading** - Management command to load claim records on first run
+- **Claims Dashboard** - Paginated list displaying claim ID, patient name, billed amount, paid amount, status, insurer name
+- **HTMX Detail View** - Claim-specific information with CPT codes, denial reasons, and notes without page reload
 - **Search & Filter** - Real-time search by claim ID, patient name, insurer, or status
 - **Flag System** - Mark claims for review with visual indicators
-- **Notes System** - Add admin, system, or user notes to claims
+- **Notes System** - Add admin, system, or user notes stored in database with real-time updates across all users
+- **Admin Dashboard** - Statistics for total flagged claims and average underpayment
+- **CSV Re-upload** - Data overwrite or append logic support
+- **User Authentication** - Login system with user-specific annotations including forgot password feature which require email verification
 - **Report Generation** - Generate detailed claim reports
 - **User Profiles** - Profile management with picture uploads
 - **Responsive Design** - Mobile-friendly interface
-- **Real-time Updates** - HTMX-powered dynamic content loading
+- **Real-time Updates** - HTMX-powered dynamic content loading and collaboration
 
 ## Tech Stack
 
