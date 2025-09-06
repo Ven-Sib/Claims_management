@@ -11,6 +11,20 @@
     </div>
 
     <div class="auth-body">
+        <!-- Admin Demo Credentials Info -->
+        <div class="alert alert-info border-0 mb-4" style="background-color: #e7f3ff; border-radius: 8px;">
+            <div class="d-flex align-items-start">
+                <div class="me-2" style="font-size: 1.1em;">🔐</div>
+                <div>
+                    <strong class="d-block mb-1">Demo Admin Access</strong>
+                    <small class="text-muted">
+                        Username: <code>Smith</code> | Password: <code>Chess2025?</code><br>
+                        <em>Full admin dashboard and website access</em>
+                    </small>
+                </div>
+            </div>
+        </div>
+
         {% if messages %}
             {% for message in messages %}
                 <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
@@ -68,4 +82,3 @@
     </div>
 </div>
 {% endblock %}
-

@@ -69,7 +69,7 @@
                     <div class="lazypaste-notes-list">
                         <h3 class="lazypaste-notes-header">💬 Notes & Annotations</h3>
                         
-                        <!-- UPDATED: Added polling with 1-second intervals -->
+                        <!-- notes polling with 1-second intervals -->
                         <div id="lazypaste-notes-list"
                             hx-get="{% url 'claims:get_notes' claim.claim_id %}"
                             hx-trigger="every 1s"
