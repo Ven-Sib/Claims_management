@@ -308,4 +308,4 @@ For issues and questions:
 
 
 
-Built with Django, HTMX, pipline.js,HTML, CSS and modern web technologies for efficient insurance claim management.
+Built with Django, HTMX, Alpine.js,HTML, CSS and modern web technologies for efficient insurance claim management.
