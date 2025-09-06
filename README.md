@@ -1,6 +1,6 @@
 # Claims Management System
 
-A Django-based web application for managing insurance claims with features for claim tracking, notes, flagging, and reporting. Built with modern web technologies including HTMX for dynamic interactions and Bootstrap for responsive design. https://claims-management-mhb2.onrender.com
+A Django-based web application for managing insurance claims with features for claim tracking, notes, flagging, and reporting. Built with modern web technologies including HTMX for dynamic interactions and Bootstrap for responsive design. https://claims-management-mhb2.onrender.com.
 
 ## Features
 
@@ -11,14 +11,14 @@ A Django-based web application for managing insurance claims with features for c
 - **Notes System** - Add admin, system, or user notes to claims
 - **Report Generation** - Generate detailed claim reports
 - **User Profiles** - Profile management with picture uploads
-- **Responsive Design** - Mobile-friendly interface with horizontal scrolling tables
+- **Responsive Design** - Mobile-friendly interface
 - **Real-time Updates** - HTMX-powered dynamic content loading
 
 ## Tech Stack
 
 - **Backend**: Django 4.2.23, Python 3.11+
-- **Frontend**: Bootstrap 5.3, HTMX, Alpine.js
-- **Database**: SQLite (production ready)
+- **Frontend**: Bootstrap 5.3, HTMX, Alpine.js, HTML & CSS
+- **Database**: SQLite 
 - **Deployment**: Render.com with automatic GitHub integration
 - **Static Files**: WhiteNoise for serving CSS/JS/images
 - **Media Files**: Custom middleware for user uploads
@@ -105,9 +105,11 @@ Claims_management/
 │   ├── middleware.py        # Custom middleware
 │   └── templatetags/        # Custom template filters
 ├── templates/               # HTML templates
+│   ├── admin_base.html     # Admin_Base template
 │   ├── base.html           # Base template
 │   ├── claims/             # Claims app templates
 │   └── auth/               # Authentication templates
+│   └── admin/              # Admin templates
 ├── static/                 # Static files (CSS, JS, images)
 │   ├── css/
 │   ├── images/
@@ -219,7 +221,6 @@ python manage.py shell
 - Combines with pagination seamlessly
 
 ### Mobile Responsiveness
-- Horizontal scrolling tables with sticky first column
 - Clickable rows for better mobile experience
 - Progressive column hiding on smaller screens
 
@@ -292,7 +293,7 @@ For large datasets (5000+ claims):
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License 
 
 ## Support
 
@@ -305,8 +306,6 @@ For issues and questions:
 
 **Production URL**: https://claims-management-mhb2.onrender.com
 
-**Test Credentials**: Contact administrator for demo access
 
----
 
-Built with Django, HTMX, and modern web technologies for efficient insurance claim management.
+Built with Django, HTMX, pipline.js,HTML, CSS and modern web technologies for efficient insurance claim management.
