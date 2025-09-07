@@ -183,7 +183,7 @@ def process_csv_append(file_path):
     return load_csv_data(file_path)
 
 def load_csv_data(file_path):
-    """Unified CSV processing - preserves existing data, only fills N/A fields"""
+    """Optimized CSV processing with batch operations"""
     created_count = 0
     updated_count = 0
     error_count = 0
@@ -197,20 +197,35 @@ def load_csv_data(file_path):
         delimiter = sniffer.sniff(sample).delimiter
         reader = csv.DictReader(csvfile, delimiter=delimiter)
         
+        # Collect all claim IDs first
+        rows_data = []
+        claim_ids = []
+        
         for row_num, row in enumerate(reader, 1):
+            claim_id = str(row.get('claim_id', '') or row.get('id', '')).strip()
+            if not claim_id:
+                errors.append(f"Row {row_num}: No claim ID found")
+                error_count += 1
+                continue
+            
+            rows_data.append((row_num, claim_id, row))
+            claim_ids.append(claim_id)
+        
+        # Batch query to get all existing claims
+        existing_claims = {
+            claim.claim_id: claim 
+            for claim in Claim.objects.filter(claim_id__in=claim_ids)
+        }
+        
+        # Prepare batch operations
+        claims_to_create = []
+        claims_to_update = []
+        
+        for row_num, claim_id, row in rows_data:
             try:
-                # Smart claim_id detection
-                claim_id = str(row.get('claim_id', '') or row.get('id', '')).strip()
-                
-                if not claim_id:
-                    errors.append(f"Row {row_num}: No claim ID found")
-                    error_count += 1
-                    continue
-                
-                # Check if claim exists
-                try:
-                    claim = Claim.objects.get(claim_id=claim_id)
-                    # Claim exists - only update N/A fields
+                if claim_id in existing_claims:
+                    # Update existing claim
+                    claim = existing_claims[claim_id]
                     updated_fields = []
                     
                     if row.get('patient_name') and claim.patient_name == 'N/A':
@@ -248,12 +263,12 @@ def load_csv_data(file_path):
                         updated_fields.append('denial_reason')
                     
                     if updated_fields:
-                        claim.save()
-                        updated_count += 1
-                    
-                except Claim.DoesNotExist:
-                    # Create new claim with N/A for missing fields
+                        claims_to_update.append(claim)
+                
+                else:
+                    # Create new claim
                     defaults = {
+                        'claim_id': claim_id,
                         'patient_name': row.get('patient_name', 'N/A').strip() if row.get('patient_name') else 'N/A',
                         'billed_amount': Decimal(str(row.get('billed_amount', '0'))) if row.get('billed_amount') else Decimal('0'),
                         'paid_amount': Decimal(str(row.get('paid_amount', '0'))) if row.get('paid_amount') else Decimal('0'),
@@ -263,13 +278,22 @@ def load_csv_data(file_path):
                         'cpt_codes': row.get('cpt_codes', 'N/A').strip() if row.get('cpt_codes') else 'N/A',
                         'denial_reason': row.get('denial_reason', 'N/A').strip() if row.get('denial_reason') else 'N/A',
                     }
-                    
-                    Claim.objects.create(claim_id=claim_id, **defaults)
-                    created_count += 1
+                    claims_to_create.append(Claim(**defaults))
                     
             except Exception as e:
                 errors.append(f"Row {row_num}: {str(e)}")
                 error_count += 1
+        
+        # Perform batch operations
+        if claims_to_create:
+            Claim.objects.bulk_create(claims_to_create, batch_size=100)
+            created_count = len(claims_to_create)
+        
+        if claims_to_update:
+            # Update in batches
+            for claim in claims_to_update:
+                claim.save()
+            updated_count = len(claims_to_update)
     
     return {
         'created': created_count,
