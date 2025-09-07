@@ -87,7 +87,7 @@ def lazypaste_csv_upload(request):
 @login_required
 @staff_member_required
 def lazypaste_process_csv(request):
-    """Process uploaded CSV file(s) - treat all files equally"""
+    """Optimized CSV processing with timeout prevention"""
     if request.method != 'POST':
         return redirect('admin_dashboard:csv_upload')
     
@@ -109,6 +109,17 @@ def lazypaste_process_csv(request):
         messages.error(request, 'File 2 must be a valid CSV file.')
         return redirect('admin_dashboard:csv_upload')
     
+    # NEW: File size validation to prevent timeouts
+    MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB limit
+    
+    if csv_file_1 and csv_file_1.size > MAX_FILE_SIZE:
+        messages.error(request, 'File 1 is too large. Please use files under 2MB.')
+        return redirect('admin_dashboard:csv_upload')
+    
+    if csv_file_2 and csv_file_2.size > MAX_FILE_SIZE:
+        messages.error(request, 'File 2 is too large. Please use files under 2MB.')
+        return redirect('admin_dashboard:csv_upload')
+    
     try:
         total_result = {
             'created': 0,
@@ -118,11 +129,23 @@ def lazypaste_process_csv(request):
             'error_details': []
         }
         
-        # Handle overwrite mode - delete existing data before processing any files
+        # NEW: Safe overwrite mode with limits
         if upload_mode == 'overwrite':
-            deleted_count = Claim.objects.count()
-            Claim.objects.all().delete()
-            total_result['deleted'] = deleted_count
+            existing_count = Claim.objects.count()
+            
+            # Prevent overwrite of large datasets to avoid timeouts
+            if existing_count > 1000:
+                messages.error(request, f'Dataset too large ({existing_count} records) for overwrite mode. Use append mode or contact admin.')
+                return redirect('admin_dashboard:csv_upload')
+            
+            if existing_count > 0:
+                Claim.objects.all().delete()
+                total_result['deleted'] = existing_count
+        
+        # NEW: Process only one file if both are provided (prevent double timeout)
+        if csv_file_1 and csv_file_2:
+            messages.warning(request, 'Processing File 1 only to prevent timeouts. Please upload File 2 separately.')
+            csv_file_2 = None
         
         # Process first file
         if csv_file_1:
@@ -139,7 +162,7 @@ def lazypaste_process_csv(request):
             
             default_storage.delete(file_name)
         
-        # Process second file
+        # Process second file (only if first file wasn't processed)
         if csv_file_2:
             file_name = default_storage.save(f'temp/{csv_file_2.name}', ContentFile(csv_file_2.read()))
             file_path = default_storage.path(file_name)
@@ -162,7 +185,7 @@ def lazypaste_process_csv(request):
         
         messages.success(request, success_message)
         return render(request, 'admin/csv_results.html', {'result': total_result})
-        
+    
     except Exception as e:
         messages.error(request, f'Error processing file: {str(e)}')
         return redirect('admin_dashboard:csv_upload')
