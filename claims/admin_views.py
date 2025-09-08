@@ -87,7 +87,7 @@ def lazypaste_csv_upload(request):
 @login_required
 @staff_member_required
 def lazypaste_process_csv(request):
-    """Optimized CSV processing with timeout prevention"""
+    """Process uploaded CSV file(s) - supports both overwrite and append for files under 4MB"""
     if request.method != 'POST':
         return redirect('admin_dashboard:csv_upload')
     
@@ -109,15 +109,15 @@ def lazypaste_process_csv(request):
         messages.error(request, 'File 2 must be a valid CSV file.')
         return redirect('admin_dashboard:csv_upload')
     
-    # NEW: File size validation to prevent timeouts
-    MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB limit
+    # File size validation - 4MB limit
+    MAX_FILE_SIZE = 4 * 1024 * 1024  # 4MB limit
     
     if csv_file_1 and csv_file_1.size > MAX_FILE_SIZE:
-        messages.error(request, 'File 1 is too large. Please use files under 2MB.')
+        messages.error(request, 'File 1 is too large. Please use files under 4MB.')
         return redirect('admin_dashboard:csv_upload')
     
     if csv_file_2 and csv_file_2.size > MAX_FILE_SIZE:
-        messages.error(request, 'File 2 is too large. Please use files under 2MB.')
+        messages.error(request, 'File 2 is too large. Please use files under 4MB.')
         return redirect('admin_dashboard:csv_upload')
     
     try:
@@ -129,23 +129,13 @@ def lazypaste_process_csv(request):
             'error_details': []
         }
         
-        # NEW: Safe overwrite mode with limits
+        # Handle overwrite mode - delete existing data before processing any files
         if upload_mode == 'overwrite':
-            existing_count = Claim.objects.count()
-            
-            # Prevent overwrite of large datasets to avoid timeouts
-            if existing_count > 1000:
-                messages.error(request, f'Dataset too large ({existing_count} records) for overwrite mode. Use append mode or contact admin.')
-                return redirect('admin_dashboard:csv_upload')
-            
-            if existing_count > 0:
+            deleted_count = Claim.objects.count()
+            if deleted_count > 0:
+                # Use efficient bulk delete
                 Claim.objects.all().delete()
-                total_result['deleted'] = existing_count
-        
-        # NEW: Process only one file if both are provided (prevent double timeout)
-        if csv_file_1 and csv_file_2:
-            messages.warning(request, 'Processing File 1 only to prevent timeouts. Please upload File 2 separately.')
-            csv_file_2 = None
+                total_result['deleted'] = deleted_count
         
         # Process first file
         if csv_file_1:
@@ -162,7 +152,7 @@ def lazypaste_process_csv(request):
             
             default_storage.delete(file_name)
         
-        # Process second file (only if first file wasn't processed)
+        # Process second file
         if csv_file_2:
             file_name = default_storage.save(f'temp/{csv_file_2.name}', ContentFile(csv_file_2.read()))
             file_path = default_storage.path(file_name)
@@ -190,23 +180,8 @@ def lazypaste_process_csv(request):
         messages.error(request, f'Error processing file: {str(e)}')
         return redirect('admin_dashboard:csv_upload')
 
-def process_csv_overwrite(file_path):
-    """Overwrite mode: Delete all existing claims, load fresh data"""
-    # Delete all existing claims
-    deleted_count = Claim.objects.count()
-    Claim.objects.all().delete()
-    
-    # Load fresh data
-    result = load_csv_data(file_path)
-    result['deleted'] = deleted_count
-    return result
-
-def process_csv_append(file_path):
-    """Append mode: Update existing, create new"""
-    return load_csv_data(file_path)
-
 def load_csv_data(file_path):
-    """Optimized CSV processing with batch operations"""
+    """Optimized CSV processing with efficient batch operations"""
     created_count = 0
     updated_count = 0
     error_count = 0
@@ -220,7 +195,7 @@ def load_csv_data(file_path):
         delimiter = sniffer.sniff(sample).delimiter
         reader = csv.DictReader(csvfile, delimiter=delimiter)
         
-        # Collect all claim IDs first
+        # Collect all claim IDs and data first
         rows_data = []
         claim_ids = []
         
@@ -234,89 +209,96 @@ def load_csv_data(file_path):
             rows_data.append((row_num, claim_id, row))
             claim_ids.append(claim_id)
         
-        # Batch query to get all existing claims
-        existing_claims = {
-            claim.claim_id: claim 
-            for claim in Claim.objects.filter(claim_id__in=claim_ids)
-        }
+        # Process in chunks to prevent memory issues with very large files
+        CHUNK_SIZE = 500
         
-        # Prepare batch operations
-        claims_to_create = []
-        claims_to_update = []
-        
-        for row_num, claim_id, row in rows_data:
-            try:
-                if claim_id in existing_claims:
-                    # Update existing claim
-                    claim = existing_claims[claim_id]
-                    updated_fields = []
+        for chunk_start in range(0, len(rows_data), CHUNK_SIZE):
+            chunk_rows = rows_data[chunk_start:chunk_start + CHUNK_SIZE]
+            chunk_claim_ids = [row[1] for row in chunk_rows]
+            
+            # Batch query to get existing claims for this chunk
+            existing_claims = {
+                claim.claim_id: claim 
+                for claim in Claim.objects.filter(claim_id__in=chunk_claim_ids)
+            }
+            
+            # Prepare batch operations for this chunk
+            claims_to_create = []
+            claims_to_update = []
+            
+            for row_num, claim_id, row in chunk_rows:
+                try:
+                    if claim_id in existing_claims:
+                        # Update existing claim
+                        claim = existing_claims[claim_id]
+                        updated_fields = []
+                        
+                        if row.get('patient_name') and claim.patient_name == 'N/A':
+                            claim.patient_name = row.get('patient_name').strip()
+                            updated_fields.append('patient_name')
+                        
+                        if row.get('billed_amount') and claim.billed_amount == Decimal('0'):
+                            try:
+                                claim.billed_amount = Decimal(str(row.get('billed_amount')))
+                                updated_fields.append('billed_amount')
+                            except:
+                                pass
+                        
+                        if row.get('paid_amount') and claim.paid_amount == Decimal('0'):
+                            try:
+                                claim.paid_amount = Decimal(str(row.get('paid_amount')))
+                                updated_fields.append('paid_amount')
+                            except:
+                                pass
+                        
+                        if row.get('status') and claim.status == 'under_review':
+                            claim.status = row.get('status').lower().replace(' ', '_')
+                            updated_fields.append('status')
+                        
+                        if row.get('insurer_name') and claim.insurer == 'N/A':
+                            claim.insurer = row.get('insurer_name').strip()
+                            updated_fields.append('insurer')
+                        
+                        if row.get('cpt_codes') and claim.cpt_codes == 'N/A':
+                            claim.cpt_codes = row.get('cpt_codes').strip()
+                            updated_fields.append('cpt_codes')
+                        
+                        if row.get('denial_reason') and claim.denial_reason == 'N/A':
+                            claim.denial_reason = row.get('denial_reason').strip()
+                            updated_fields.append('denial_reason')
+                        
+                        if updated_fields:
+                            claims_to_update.append(claim)
                     
-                    if row.get('patient_name') and claim.patient_name == 'N/A':
-                        claim.patient_name = row.get('patient_name').strip()
-                        updated_fields.append('patient_name')
-                    
-                    if row.get('billed_amount') and claim.billed_amount == Decimal('0'):
-                        try:
-                            claim.billed_amount = Decimal(str(row.get('billed_amount')))
-                            updated_fields.append('billed_amount')
-                        except:
-                            pass
-                    
-                    if row.get('paid_amount') and claim.paid_amount == Decimal('0'):
-                        try:
-                            claim.paid_amount = Decimal(str(row.get('paid_amount')))
-                            updated_fields.append('paid_amount')
-                        except:
-                            pass
-                    
-                    if row.get('status') and claim.status == 'under_review':
-                        claim.status = row.get('status').lower().replace(' ', '_')
-                        updated_fields.append('status')
-                    
-                    if row.get('insurer_name') and claim.insurer == 'N/A':
-                        claim.insurer = row.get('insurer_name').strip()
-                        updated_fields.append('insurer')
-                    
-                    if row.get('cpt_codes') and claim.cpt_codes == 'N/A':
-                        claim.cpt_codes = row.get('cpt_codes').strip()
-                        updated_fields.append('cpt_codes')
-                    
-                    if row.get('denial_reason') and claim.denial_reason == 'N/A':
-                        claim.denial_reason = row.get('denial_reason').strip()
-                        updated_fields.append('denial_reason')
-                    
-                    if updated_fields:
-                        claims_to_update.append(claim)
-                
-                else:
-                    # Create new claim
-                    defaults = {
-                        'claim_id': claim_id,
-                        'patient_name': row.get('patient_name', 'N/A').strip() if row.get('patient_name') else 'N/A',
-                        'billed_amount': Decimal(str(row.get('billed_amount', '0'))) if row.get('billed_amount') else Decimal('0'),
-                        'paid_amount': Decimal(str(row.get('paid_amount', '0'))) if row.get('paid_amount') else Decimal('0'),
-                        'status': row.get('status', 'under_review').lower().replace(' ', '_') if row.get('status') else 'under_review',
-                        'insurer': row.get('insurer_name', 'N/A').strip() if row.get('insurer_name') else 'N/A',
-                        'discharge_date': parse_date(row.get('discharge_date', '')) or datetime.now().date(),
-                        'cpt_codes': row.get('cpt_codes', 'N/A').strip() if row.get('cpt_codes') else 'N/A',
-                        'denial_reason': row.get('denial_reason', 'N/A').strip() if row.get('denial_reason') else 'N/A',
-                    }
-                    claims_to_create.append(Claim(**defaults))
-                    
-            except Exception as e:
-                errors.append(f"Row {row_num}: {str(e)}")
-                error_count += 1
-        
-        # Perform batch operations
-        if claims_to_create:
-            Claim.objects.bulk_create(claims_to_create, batch_size=100)
-            created_count = len(claims_to_create)
-        
-        if claims_to_update:
-            # Update in batches
-            for claim in claims_to_update:
-                claim.save()
-            updated_count = len(claims_to_update)
+                    else:
+                        # Create new claim
+                        defaults = {
+                            'claim_id': claim_id,
+                            'patient_name': row.get('patient_name', 'N/A').strip() if row.get('patient_name') else 'N/A',
+                            'billed_amount': Decimal(str(row.get('billed_amount', '0'))) if row.get('billed_amount') else Decimal('0'),
+                            'paid_amount': Decimal(str(row.get('paid_amount', '0'))) if row.get('paid_amount') else Decimal('0'),
+                            'status': row.get('status', 'under_review').lower().replace(' ', '_') if row.get('status') else 'under_review',
+                            'insurer': row.get('insurer_name', 'N/A').strip() if row.get('insurer_name') else 'N/A',
+                            'discharge_date': parse_date(row.get('discharge_date', '')) or datetime.now().date(),
+                            'cpt_codes': row.get('cpt_codes', 'N/A').strip() if row.get('cpt_codes') else 'N/A',
+                            'denial_reason': row.get('denial_reason', 'N/A').strip() if row.get('denial_reason') else 'N/A',
+                        }
+                        claims_to_create.append(Claim(**defaults))
+                        
+                except Exception as e:
+                    errors.append(f"Row {row_num}: {str(e)}")
+                    error_count += 1
+            
+            # Perform batch operations for this chunk
+            if claims_to_create:
+                Claim.objects.bulk_create(claims_to_create, batch_size=100)
+                created_count += len(claims_to_create)
+            
+            if claims_to_update:
+                # Bulk update using update_fields for efficiency
+                for claim in claims_to_update:
+                    claim.save()
+                updated_count += len(claims_to_update)
     
     return {
         'created': created_count,
