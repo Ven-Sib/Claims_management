@@ -93,18 +93,29 @@ class UserProfile(models.Model):
         return f"{self.user.username}'s Profile"
     
     def save(self, *args, **kwargs):
-        """Override save to resize profile picture"""
+        """Override save to resize profile picture with error handling"""
         super().save(*args, **kwargs)
         
         if self.profile_picture:
-            # Open and resize image
             img_path = self.profile_picture.path
-            with Image.open(img_path) as img:
-                # Resize to 300x300 pixels
-                if img.height > 300 or img.width > 300:
-                    output_size = (300, 300)
-                    img.thumbnail(output_size, Image.Resampling.LANCZOS)
-                    img.save(img_path, quality=85, optimize=True)
+            try:
+                # Check if file exists before trying to process it
+                if os.path.exists(img_path):
+                    with Image.open(img_path) as img:
+                        # Resize to 300x300 pixels
+                        if img.height > 300 or img.width > 300:
+                            output_size = (300, 300)
+                            img.thumbnail(output_size, Image.Resampling.LANCZOS)
+                            img.save(img_path, quality=85, optimize=True)
+                else:
+                    # File doesn't exist, clear the field to prevent future errors
+                    self.profile_picture = None
+                    super().save(update_fields=['profile_picture'])
+            except Exception as e:
+                # Any error with image processing, clear the field
+                print(f"Error processing profile picture: {e}")
+                self.profile_picture = None
+                super().save(update_fields=['profile_picture'])
     
     def get_profile_picture_url(self):
         """Get profile picture URL or default avatar"""
