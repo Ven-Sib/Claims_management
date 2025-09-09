@@ -199,7 +199,7 @@ def load_csv_data_bulk(file_path):
                     'paid_amount': Decimal(str(row.get('paid_amount', '0'))) if row.get('paid_amount') else Decimal('0'),
                     'status': row.get('status', 'under_review').lower().replace(' ', '_') if row.get('status') else 'under_review',
                     'insurer': row.get('insurer_name', 'N/A').strip() if row.get('insurer_name') else 'N/A',
-                    'discharge_date': parse_date(row.get('discharge_date', '')) or datetime.now().date(),
+                    'discharge_date': parse_date(row.get('discharge_date', '')),
                     'cpt_codes': row.get('cpt_codes', 'N/A').strip() if row.get('cpt_codes') else 'N/A',
                     'denial_reason': row.get('denial_reason', 'N/A').strip() if row.get('denial_reason') else 'N/A',
                 }
