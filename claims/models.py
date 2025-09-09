@@ -3,7 +3,8 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from PIL import Image
 import os
-
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.core.files.storage import default_storage
 
 class Claim(models.Model):
@@ -128,9 +129,7 @@ class UserProfile(models.Model):
     class Meta:
         ordering = ['-created_at']
 
-# Signal to create UserProfile when User is created
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):

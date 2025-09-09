@@ -69,7 +69,7 @@ def lazypaste_admin_dashboard(request):
         'flagged_claims': flagged_claims,
         'avg_underpayment': avg_underpayment,
         'total_underpayment': total_underpayment,
-        'status_stats': status_stats,  # Now includes percentage field
+        'status_stats': status_stats, 
         'recent_notes': recent_notes,
         'recent_claims': recent_claims,
         'total_users': total_users,
@@ -87,7 +87,7 @@ def lazypaste_csv_upload(request):
 @login_required
 @staff_member_required
 def lazypaste_process_csv(request):
-    """Modern bulk CSV processing optimized for PostgreSQL"""
+    """bulk CSV processing optimized for PostgreSQL"""
     if request.method != 'POST':
         return redirect('admin_dashboard:csv_upload')
     
@@ -168,7 +168,7 @@ def lazypaste_process_csv(request):
 
 
 def load_csv_data_bulk(file_path):
-    """Modern bulk CSV processing using PostgreSQL-optimized operations"""
+    """bulk CSV processing using PostgreSQL-optimized operations"""
     created_count = 0
     updated_count = 0
     error_count = 0
