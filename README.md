@@ -91,6 +91,7 @@ python manage.py runserver
 9. **Access the application**
    - Main app: http://127.0.0.1:8000/
    - Admin panel: http://127.0.0.1:8000/admin/
+   Note: if https is forced due to production security implemented, open on incognito mode in your chrome browser
 
 ## Project Structure
 
