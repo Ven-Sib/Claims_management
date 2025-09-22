@@ -36,7 +36,7 @@ class Command(BaseCommand):
 
         try:
             if file_format == 'csv':
-                self.lazypaste_load_csv(file_path)  # Maintaining robustness in function naming
+                self.lazypaste_load_csv(file_path)
             elif file_format == 'json':
                 self.lazypaste_load_json(file_path)
 
@@ -49,35 +49,90 @@ class Command(BaseCommand):
             )
 
     def lazypaste_load_csv(self, file_path):
-        """Load claims from CSV file with robustness in error handling"""
+        """Load claims from CSV file with pipe delimiter support"""
         with open(file_path, 'r', encoding='utf-8') as csvfile:
-            reader = csv.DictReader(csvfile)
+            # Try pipe delimiter first, then comma
+            sample = csvfile.read(1024)
+            csvfile.seek(0)
+            
+            if '|' in sample:
+                delimiter = '|'
+            else:
+                delimiter = ','
+            
+            reader = csv.DictReader(csvfile, delimiter=delimiter)
+            
+            # Check if this is a detail file (has claim_id column) or main file (has patient_name)
+            fieldnames = reader.fieldnames
+            is_detail_file = 'claim_id' in fieldnames and 'patient_name' not in fieldnames
+            is_main_file = 'patient_name' in fieldnames
+            
+            if is_detail_file:
+                self.stdout.write('Processing detail file (updating existing claims)...')
+            elif is_main_file:
+                self.stdout.write('Processing main claims file...')
+            else:
+                self.stdout.write('Unknown file format, attempting to process...')
             
             for row in reader:
                 try:
-                    # Parse discharge date
-                    discharge_date = parse_date(row.get('discharge_date', ''))
-                    if not discharge_date:
-                        discharge_date = datetime.now().date()
-                    
-                    claim, created = Claim.objects.update_or_create(
-                        claim_id=row['claim_id'],
-                        defaults={
-                            'patient_name': row.get('patient_name', ''),
-                            'billed_amount': Decimal(str(row.get('billed_amount', '0'))),
-                            'paid_amount': Decimal(str(row.get('paid_amount', '0'))),
-                            'status': row.get('status', 'under_review'),
-                            'insurer': row.get('insurer_name', ''),
-                            'discharge_date': discharge_date,
-                            'cpt_codes': row.get('cpt_codes', ''),
-                            'denial_reason': row.get('denial_reason', ''),
-                        }
-                    )
-                    
-                    if created:
-                        self.stdout.write(f'Created claim {claim.claim_id}')
+                    if is_detail_file:
+                        # Detail file: Update existing claims with claim_id, denial_reason, cpt_codes
+                        claim_id = row.get('claim_id', '')
+                        
+                        if not claim_id:
+                            continue
+                        
+                        try:
+                            claim = Claim.objects.get(claim_id=str(claim_id))
+                            
+                            # Update only the detail fields
+                            if row.get('cpt_codes'):
+                                claim.cpt_codes = row.get('cpt_codes', '')
+                            if row.get('denial_reason') and row.get('denial_reason') != 'N/A':
+                                claim.denial_reason = row.get('denial_reason', '')
+                            
+                            claim.save()
+                            self.stdout.write(f'Updated details for claim {claim.claim_id}')
+                            
+                        except Claim.DoesNotExist:
+                            self.stdout.write(f'Claim {claim_id} not found, skipping detail update')
+                            continue
+                            
                     else:
-                        self.stdout.write(f'Updated claim {claim.claim_id}')
+                        # Main file: Create/update full claim records
+                        claim_id = row.get('id') or row.get('claim_id', '')
+                        
+                        if not claim_id:
+                            self.stdout.write(f'Skipping row with no claim_id: {row}')
+                            continue
+                        
+                        # Parse discharge date
+                        discharge_date = parse_date(row.get('discharge_date', ''))
+                        if not discharge_date:
+                            discharge_date = datetime.now().date()
+                        
+                        # Handle status conversion
+                        status = row.get('status', 'under_review').lower().replace(' ', '_')
+                        
+                        claim, created = Claim.objects.update_or_create(
+                            claim_id=str(claim_id),
+                            defaults={
+                                'patient_name': row.get('patient_name', ''),
+                                'billed_amount': Decimal(str(row.get('billed_amount', '0'))),
+                                'paid_amount': Decimal(str(row.get('paid_amount', '0'))),
+                                'status': status,
+                                'insurer': row.get('insurer_name', ''),
+                                'discharge_date': discharge_date,
+                                'cpt_codes': row.get('cpt_codes', ''),
+                                'denial_reason': row.get('denial_reason', ''),
+                            }
+                        )
+                        
+                        if created:
+                            self.stdout.write(f'Created claim {claim.claim_id}')
+                        else:
+                            self.stdout.write(f'Updated claim {claim.claim_id}')
                         
                 except Exception as e:
                     self.stdout.write(f'Error processing row {row}: {str(e)}')
